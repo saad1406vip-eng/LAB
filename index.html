@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Lab"/>
+  <meta name="theme-color" content="#f0f4ff"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="apple-touch-icon" href="./icons/icon-192.png"/>
+  <title>Lab Interpreter Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#f0f4ff; --bg2:#fff; --bg3:#f7f9ff; --card:#fff;
+      --line:#dde3f5; --line2:#eaf0ff;
+      --text:#1a2040; --text2:#2a3560;
+      --dim:#7a88b8; --dim2:#a0aed0;
+      --acc:#2952d0; --acc2:#e8eeff;
+      --hi:#d63020; --hi2:#fff0ee;
+      --lo:#0070c0; --lo2:#e8f4ff;
+      --ok:#1a7a3a; --ok2:#eafff1;
+      --warn:#b06000; --warn2:#fff8e8;
+      --safe-t:env(safe-area-inset-top,0px);
+      --safe-b:env(safe-area-inset-bottom,0px);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;overflow:hidden}
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+    input{outline:none}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+
+    #app{display:flex;flex-direction:column;height:100dvh;padding-top:calc(var(--safe-t)+8px)}
+    .nav{flex-shrink:0;display:flex;background:var(--bg2);border-bottom:1.5px solid var(--line)}
+    .nav-tab{flex:1;padding:9px 2px;font-size:8px;letter-spacing:.8px;text-align:center;
+             color:var(--dim);cursor:pointer;border-bottom:2.5px solid transparent;
+             transition:all .15s;text-transform:uppercase;font-weight:500}
+    .nav-tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+
+    .page{display:none;flex:1;flex-direction:column;background:var(--bg);overflow:hidden}
+    .page.on{display:flex}
+    .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .inner{padding:12px 13px}
+
+    .card{background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+          margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(40,60,140,.06)}
+    .ch{background:var(--bg3);padding:7px 13px;font-size:9px;letter-spacing:2px;
+        color:var(--acc);text-transform:uppercase;font-weight:600;border-bottom:1px solid var(--line2)}
+    .ch.red{color:var(--hi)} .ch.grn{color:var(--ok)} .ch.ora{color:var(--warn)}
+    .row{display:flex;align-items:center;padding:9px 13px;border-bottom:1px solid var(--line2);gap:8px}
+    .row:last-child{border-bottom:none}
+
+    .fi{background:var(--bg3);border:1.5px solid var(--line);color:var(--text);
+        border-radius:7px;padding:8px 11px;font-family:inherit;font-size:13px;
+        width:100%;transition:border-color .12s}
+    .fi:focus{border-color:var(--acc)}
+    .ti{background:var(--bg3);border:1.5px solid var(--line);color:var(--text);
+        border-radius:6px;padding:6px 8px;font-family:inherit;font-size:13px;
+        width:94px;transition:border-color .12s;direction:ltr;text-align:left}
+    .ti:focus{border-color:var(--acc)}
+    .ti.hi{border-color:#e05040;background:var(--hi2);color:var(--hi)}
+    .ti.lo{border-color:#4090d0;background:var(--lo2);color:var(--lo)}
+    .ti.nl{border-color:#40b060;background:var(--ok2);color:var(--ok)}
+
+    .btn{border:none;cursor:pointer;border-radius:7px;font-family:inherit;
+         font-size:11px;padding:8px 15px;letter-spacing:.3px;transition:all .12s;font-weight:500}
+    .btn-p{background:var(--acc);color:#fff}
+    .btn-p:active{opacity:.85}
+    .btn-g{background:var(--bg3);color:var(--dim);border:1.5px solid var(--line)}
+    .btn-g:active{border-color:var(--acc);color:var(--acc)}
+    .btn-ok{background:var(--ok);color:#fff}
+    .btn-warn{background:var(--warn2);color:var(--warn);border:1.5px solid #e8c060}
+    .btn-scan{background:#6620cc;color:#fff;display:flex;align-items:center;gap:5px}
+    .btn-red{background:var(--hi2);color:var(--hi);border:1.5px solid var(--hi)}
+
+    .sx{padding:7px 16px;border-radius:6px;cursor:pointer;font-family:inherit;
+        font-size:11px;border:1.5px solid var(--line);transition:all .12s;font-weight:500}
+    .sx.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+    .sx:not(.on){background:var(--bg3);color:var(--dim)}
+
+    .tag{font-size:9px;font-weight:700;padding:3px 5px;border-radius:4px;
+         letter-spacing:.3px;width:46px;text-align:center;flex-shrink:0}
+    .t-hi{background:var(--hi2);color:var(--hi)}
+    .t-lo{background:var(--lo2);color:var(--lo)}
+    .t-nl{background:var(--ok2);color:var(--ok)}
+    .t-uk{background:var(--bg3);color:var(--dim)}
+    .bar-bg{height:4px;background:var(--line);border-radius:2px;flex:1;min-width:30px;overflow:hidden}
+    .bar-fg{height:100%;border-radius:2px;transition:width .2s}
+
+    .sum-row{display:flex;gap:8px;margin-bottom:12px}
+    .sum-box{flex:1;background:var(--card);border-radius:8px;padding:10px 4px;
+             text-align:center;box-shadow:0 1px 4px rgba(40,60,140,.06);border:1.5px solid var(--line)}
+    .sum-n{font-size:20px;font-weight:700;line-height:1}
+    .sum-l{font-size:8px;letter-spacing:1px;margin-top:3px;font-weight:600}
+
+    .stepbar{flex-shrink:0;padding:7px 13px;border-bottom:1px solid var(--line);
+             background:var(--bg2);display:flex;align-items:center;gap:5px}
+    .sdot{width:20px;height:3px;border-radius:2px;transition:background .2s}
+    .sline{width:10px;height:1px;background:var(--line)}
+    .slabel{font-size:8px;color:var(--dim);letter-spacing:1.5px;font-weight:500}
+
+    .bot{flex-shrink:0;padding:9px 13px calc(var(--safe-b)+9px);
+         border-top:1.5px solid var(--line);background:var(--bg2);
+         display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
+
+    .fl{font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:5px;font-weight:500}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+    .tname{font-size:12px;color:var(--text);font-weight:600}
+    .tref{font-size:9px;color:var(--dim2);margin-top:2px;direction:ltr;text-align:left}
+    .ph{font-size:8px;color:var(--dim);letter-spacing:3px;margin-bottom:4px;font-weight:500}
+    .ph2{font-size:17px;font-weight:700;color:var(--text2)}
+    .pstrip{background:var(--card);border:1.5px solid var(--line);border-radius:9px;
+            padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;
+            align-items:center;flex-wrap:wrap;gap:8px;box-shadow:0 1px 4px rgba(40,60,140,.06)}
+    .pname{font-size:14px;font-weight:700;color:var(--text)}
+    .pmeta{font-size:9px;color:var(--dim);margin-top:2px}
+
+    /* Calc boxes */
+    .calc-box{background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+              padding:15px;margin-bottom:12px;box-shadow:0 1px 4px rgba(40,60,140,.06)}
+    .calc-result{border-radius:8px;padding:14px;text-align:center;margin-top:14px}
+    .big-num{font-size:36px;font-weight:700;line-height:1}
+    .step-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;
+              padding:10px;background:var(--bg3);border-radius:7px;border:1px solid var(--line2)}
+    .step-n{width:20px;height:20px;border-radius:50%;background:var(--acc);color:#fff;
+            font-size:9px;display:flex;align-items:center;justify-content:center;
+            flex-shrink:0;margin-top:2px;font-weight:700}
+    .warn-box{background:var(--warn2);border:1px solid #e8c060;border-radius:6px;
+              padding:8px 11px;font-size:9px;color:var(--warn);font-weight:600}
+    .formula-box{background:var(--bg3);border-radius:7px;padding:10px;
+                 border:1px solid var(--line2);font-size:10px;color:var(--text2);
+                 direction:ltr;line-height:1.9;white-space:pre-wrap}
+
+    /* OCR Modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+                   display:flex;align-items:flex-end;justify-content:center}
+    .modal{background:var(--bg2);border-radius:16px 16px 0 0;padding:20px 16px calc(var(--safe-b)+20px);
+           width:100%;max-height:90vh;overflow-y:auto}
+    .modal-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+    .modal-sub{font-size:10px;color:var(--dim);margin-bottom:14px}
+    #ocr-preview{width:100%;border-radius:8px;margin-bottom:12px;display:none;border:1.5px solid var(--line)}
+    .ocr-status{font-size:11px;color:var(--dim);text-align:center;padding:10px;
+                background:var(--bg3);border-radius:7px;margin-bottom:10px}
+    #ocr-matches{margin-bottom:10px}
+    .match-row{display:flex;align-items:center;padding:8px 10px;background:var(--bg3);
+               border-radius:7px;margin-bottom:6px;gap:8px;border:1px solid var(--line2)}
+    .match-test{font-size:11px;font-weight:600;flex:1}
+    .match-val{font-size:13px;font-weight:700;color:var(--acc)}
+
+    /* Bottom print bar */
+    .print-bar{flex-shrink:0;padding:8px 13px calc(var(--safe-b)+8px);
+               border-top:2px solid var(--acc);background:var(--acc2);
+               display:flex;gap:7px;align-items:center}
+    .print-hint{font-size:9px;color:var(--acc);flex:1;font-weight:600}
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div class="nav">
+    <div class="nav-tab on" data-tab="results" onclick="switchTab('results')">⚗ Results</div>
+    <div class="nav-tab"    data-tab="calcs"   onclick="switchTab('calcs')">🧮 Calc</div>
+    <div class="nav-tab"    data-tab="urine24" onclick="switchTab('urine24')">🧪 24h</div>
+    <div class="nav-tab"    data-tab="report"  onclick="switchTab('report')">📋 Report</div>
+  </div>
+
+  <!-- ═══ TAB 1: RESULTS ═══ -->
+  <div class="page on" id="tab-results">
+    <div class="stepbar" id="stepbar"></div>
+    <div class="scroll" id="main"></div>
+    <div class="bot" id="footer"></div>
+  </div>
+
+  <!-- ═══ TAB 2: CALCULATORS ═══ -->
+  <div class="page" id="tab-calcs">
+    <div class="scroll"><div class="inner">
+
+      <div style="margin-bottom:14px">
+        <div class="ph">CLINICAL CALCULATORS</div>
+        <div class="ph2">Calculators</div>
+      </div>
+
+      <!-- eGFR -->
+      <div class="calc-box">
+        <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:14px">eGFR — CKD-EPI 2021</div>
+        <div class="step-row">
+          <div class="step-n">1</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Creatinine — µmol/L</div>
+            <input class="fi" type="number" id="egfr-crea" placeholder="e.g. 88" step="any" oninput="calcEGFR()"/>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">2</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Age / العمر</div>
+            <input class="fi" type="number" id="egfr-age" placeholder="Years" step="1" oninput="calcEGFR()"/>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0">
+          <div class="step-n">3</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;margin-bottom:8px">Sex</div>
+            <div style="display:flex;gap:8px">
+              <button class="sx on" id="egfr-m" onclick="setEgfrSex('male')">Male</button>
+              <button class="sx"    id="egfr-f" onclick="setEgfrSex('female')">Female</button>
+            </div>
+          </div>
+        </div>
+        <div id="egfr-result" style="display:none" class="calc-result">
+          <div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:6px;font-weight:600">eGFR (CKD-EPI 2021)</div>
+          <div class="big-num" id="egfr-num">—</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:4px">mL/min/1.73m²</div>
+          <div style="font-size:13px;font-weight:700;margin-top:8px" id="egfr-stage">—</div>
+          <div style="font-size:10px;margin-top:3px" id="egfr-desc">—</div>
+          <div style="margin-top:10px" class="formula-box" id="egfr-formula"></div>
+        </div>
+        <div style="margin-top:12px" class="formula-box">CKD-EPI 2021:
+eGFR = 142 × min(Scr/κ,1)^α × max(Scr/κ,1)^−1.200 × 0.9938^Age × [1.012 if F]
+κ: 0.7(F)/0.9(M)  α: −0.241(F)/−0.302(M)</div>
+      </div>
+
+      <div class="card">
+        <div class="ch">CKD STAGES</div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--ok)">G1</div><div style="flex:1;font-size:11px">≥ 90</div><div style="font-size:10px;color:var(--ok);font-weight:600">Normal</div></div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--ok)">G2</div><div style="flex:1;font-size:11px">60–89</div><div style="font-size:10px;color:var(--ok);font-weight:600">Mildly ↓</div></div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--warn)">G3a</div><div style="flex:1;font-size:11px">45–59</div><div style="font-size:10px;color:var(--warn);font-weight:600">Mild-Moderate ↓</div></div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--warn)">G3b</div><div style="flex:1;font-size:11px">30–44</div><div style="font-size:10px;color:var(--warn);font-weight:600">Moderate-Severe ↓</div></div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--hi)">G4</div><div style="flex:1;font-size:11px">15–29</div><div style="font-size:10px;color:var(--hi);font-weight:600">Severely ↓</div></div>
+        <div class="row"><div style="width:34px;font-weight:700;color:var(--hi)">G5</div><div style="flex:1;font-size:11px">&lt; 15</div><div style="font-size:10px;color:var(--hi);font-weight:600">Kidney Failure</div></div>
+      </div>
+
+      <!-- ACR -->
+      <div class="calc-box">
+        <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:10px">ACR — Approximate Workaround</div>
+        <div class="warn-box" style="margin-bottom:14px">⚠ Albumin من dipstick (mg/dL) + Creatinine من Cobas (µmol/L)</div>
+        <div class="step-row">
+          <div class="step-n">1</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Albumin — mg/dL (من الاسترب)</div>
+            <input class="fi" type="number" id="acr-alb" placeholder="e.g. 30" step="any" oninput="calcACR()"/>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0">
+          <div class="step-n">2</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Creatinine — µmol/L (من الكوباس)</div>
+            <input class="fi" type="number" id="acr-crea" placeholder="e.g. 88" step="any" oninput="calcACR()"/>
+          </div>
+        </div>
+        <div id="acr-result" style="display:none" class="calc-result">
+          <div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:6px;font-weight:600">CALCULATED ACR</div>
+          <div class="big-num" id="acr-num">—</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:4px">mg/g (approximate)</div>
+          <div style="font-size:13px;font-weight:700;margin-top:8px" id="acr-cat">—</div>
+          <div style="margin-top:10px" class="formula-box" id="acr-formula"></div>
+          <div style="margin-top:10px" class="warn-box">⚠ نتيجة تقريبية — أبلغ الطبيب</div>
+        </div>
+        <div style="margin-top:12px" class="formula-box">Crea (mg/dL) = µmol/L ÷ 88.4
+ACR (mg/g) = [Alb (mg/dL) ÷ Crea (mg/dL)] × 1000</div>
+      </div>
+      <div class="card">
+        <div class="ch">ACR CLASSIFICATION</div>
+        <div class="row"><div style="width:36px;font-weight:700;color:var(--ok)">A1</div><div style="flex:1;font-size:11px">&lt; 30 mg/g</div><div style="font-size:10px;color:var(--ok);font-weight:600">Normal</div></div>
+        <div class="row"><div style="width:36px;font-weight:700;color:var(--warn)">A2</div><div style="flex:1;font-size:11px">30–300 mg/g</div><div style="font-size:10px;color:var(--warn);font-weight:600">Moderately ↑</div></div>
+        <div class="row"><div style="width:36px;font-weight:700;color:var(--hi)">A3</div><div style="flex:1;font-size:11px">&gt; 300 mg/g</div><div style="font-size:10px;color:var(--hi);font-weight:600">Severely ↑</div></div>
+      </div>
+      <div class="bot" style="position:sticky;bottom:0">
+        <button class="btn btn-red" onclick="clearCalcs()">🗑 Clear Calculators</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ═══ TAB 3: 24H URINE ═══ -->
+  <div class="page" id="tab-urine24">
+    <div class="scroll"><div class="inner">
+      <div style="margin-bottom:14px">
+        <div class="ph">24-HOUR URINE COLLECTION</div>
+        <div class="ph2">بول 24 ساعة</div>
+      </div>
+      <div class="card">
+        <div class="ch">COLLECTION VOLUME</div>
+        <div class="row">
+          <div style="flex:1">
+            <div class="tname">Total Volume</div>
+            <div class="tref">Normal: 800–2000 mL/24h</div>
+          </div>
+          <input class="fi" type="number" id="u24-vol" placeholder="mL" step="any"
+            style="width:110px" oninput="onVolChange()"/>
+        </div>
+      </div>
+      <div id="vol-status" style="display:none;margin-bottom:10px;padding:9px 13px;border-radius:7px;font-size:10px;font-weight:600;border:1.5px solid"></div>
+      <div class="card">
+        <div class="ch ora">ENTER CONCENTRATIONS</div>
+        <div id="u24-inputs"></div>
+      </div>
+      <div id="u24-results" style="display:none">
+        <div class="card">
+          <div class="ch grn">CALCULATED EXCRETION / 24h</div>
+          <div id="u24-calc-rows"></div>
+        </div>
+        <div class="formula-box" style="margin-bottom:10px">Excretion = Concentration × Volume (L)
+e.g. Na: 140 mmol/L × 1.5 L = 210 mmol/24h</div>
+      </div>
+      <div class="bot" style="position:sticky;bottom:0">
+        <button class="btn btn-red" onclick="clearU24()">🗑 Clear 24h Urine</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ═══ TAB 4: REPORT ═══ -->
+  <div class="page" id="tab-report">
+    <div class="scroll"><div class="inner">
+      <div style="margin-bottom:14px">
+        <div class="ph">FINAL REPORT — التقرير النهائي</div>
+        <div class="ph2">Summary & Print</div>
+      </div>
+
+      <div id="report-summary"></div>
+
+      <div class="bot" style="position:sticky;bottom:0;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-red" onclick="clearAll()">🗑 Clear All</button>
+        <button class="btn btn-scan" onclick="openScanner()">📷 Scan Result</button>
+        <button class="btn btn-ok" onclick="doPrint()">⎙ Print Report</button>
+      </div>
+    </div></div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- OCR Modal -->
+<div class="modal-overlay" id="ocr-modal" style="display:none" onclick="closeScanner(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">📷 Scan Lab Result</div>
+    <div class="modal-sub">صوّر ورقة النتائج — سيقرأ الأرقام تلقائياً</div>
+    <input type="file" id="ocr-file" accept="image/*" capture="environment" style="display:none" onchange="handleOcrImage(event)"/>
+    <img id="ocr-preview"/>
+    <div class="ocr-status" id="ocr-status">اضغط لالتقاط صورة أو اختيار من المعرض</div>
+    <div id="ocr-matches"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-scan" style="flex:1" onclick="document.getElementById('ocr-file').click()">📷 Open Camera</button>
+      <button class="btn btn-p" id="ocr-apply" style="flex:1;display:none" onclick="applyOcrResults()">✓ Apply Results</button>
+      <button class="btn btn-g" style="flex:1" onclick="closeScanner()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const TESTS = {
+  GLUC:  {label:"Glucose",           unit:"mmol/L", ref:{all:[3.9,6.1]}},
+  UREA:  {label:"Urea",              unit:"mmol/L", ref:{all:[2.5,7.8]}},
+  CREA:  {label:"Creatinine",        unit:"µmol/L", ref:{male:[62,106],female:[44,80]}},
+  URICA: {label:"Uric Acid",         unit:"µmol/L", ref:{male:[202,416],female:[143,340]}},
+  ALT:   {label:"ALT",               unit:"U/L",    ref:{male:[7,56],female:[7,35]}},
+  AST:   {label:"AST",               unit:"U/L",    ref:{male:[10,40],female:[10,35]}},
+  GGT:   {label:"GGT",               unit:"U/L",    ref:{male:[8,61],female:[5,36]}},
+  ALP:   {label:"ALP",               unit:"U/L",    ref:{male:[40,129],female:[35,104]}},
+  LDH:   {label:"LDH",               unit:"U/L",    ref:{all:[135,225]}},
+  CK:    {label:"CK",                unit:"U/L",    ref:{male:[39,308],female:[26,192]}},
+  BILT:  {label:"Bilirubin Total",   unit:"µmol/L", ref:{all:[3.4,20.5]}},
+  BILD:  {label:"Bilirubin Direct",  unit:"µmol/L", ref:{all:[0,5.1]}},
+  TP:    {label:"Total Protein",     unit:"g/L",    ref:{all:[64,83]}},
+  ALB:   {label:"Albumin",           unit:"g/L",    ref:{male:[40,51],female:[35,52]}},
+  AMYL:  {label:"Amylase",           unit:"U/L",    ref:{all:[28,100]}},
+  LIP:   {label:"Lipase",            unit:"U/L",    ref:{all:[13,60]}},
+  CHOL:  {label:"Cholesterol",       unit:"mmol/L", ref:{all:[0,5.17]}},
+  LDLC:  {label:"LDL-C",            unit:"mmol/L", ref:{all:[0,3.36]}},
+  HDLC:  {label:"HDL-C",            unit:"mmol/L", ref:{male:[1.0,1.6],female:[1.2,1.9]}},
+  TRIG:  {label:"Triglycerides",     unit:"mmol/L", ref:{all:[0,1.7]}},
+  Na:    {label:"Sodium",            unit:"mmol/L", ref:{all:[136,145]}},
+  K:     {label:"Potassium",         unit:"mmol/L", ref:{all:[3.5,5.1]}},
+  Cl:    {label:"Chloride",          unit:"mmol/L", ref:{all:[98,107]}},
+  Ca:    {label:"Calcium",           unit:"mmol/L", ref:{all:[2.15,2.55]}},
+  Mg:    {label:"Magnesium",         unit:"mmol/L", ref:{all:[0.74,1.03]}},
+  Phos:  {label:"Phosphorus",        unit:"mmol/L", ref:{all:[0.87,1.45]}},
+  Iron:  {label:"Iron",              unit:"µmol/L", ref:{male:[11.6,31.3],female:[6.6,26.0]}},
+  TIBC:  {label:"TIBC",              unit:"µmol/L", ref:{all:[45,72]}},
+  Ferritin:{label:"Ferritin",        unit:"µg/L",   ref:{male:[30,400],female:[13,150]}},
+  TSH:   {label:"TSH",               unit:"mIU/L",  ref:{all:[0.27,4.2]}},
+  FT3:   {label:"Free T3",           unit:"pmol/L", ref:{all:[3.1,6.8]}},
+  FT4:   {label:"Free T4",           unit:"pmol/L", ref:{all:[12,22]}},
+  TT3:   {label:"Total T3",          unit:"nmol/L", ref:{all:[1.2,2.7]}},
+  TT4:   {label:"Total T4",          unit:"nmol/L", ref:{all:[66,181]}},
+  AntiTPO:{label:"Anti-TPO",         unit:"IU/mL",  ref:{all:[0,34]}},
+  AntiTg:{label:"Anti-Thyroglobulin",unit:"IU/mL",  ref:{all:[0,115]}},
+  Testosterone:{label:"Testosterone",unit:"nmol/L", ref:{male:[9.9,27.8],female:[0.29,1.67]}},
+  DHEAS: {label:"DHEA-S",            unit:"µmol/L", ref:{male:[4.34,12.2],female:[2.68,9.23]}},
+  Cortisol:{label:"Cortisol (AM)",   unit:"nmol/L", ref:{all:[138,690]}},
+  Insulin:{label:"Insulin",          unit:"µIU/mL", ref:{all:[2.6,24.9]}},
+  CPeptide:{label:"C-Peptide",       unit:"nmol/L", ref:{all:[0.37,1.47]}},
+  LH:    {label:"LH",                unit:"IU/L",   ref:{male:[1.7,8.6],female:[2.4,12.6]}},
+  FSH:   {label:"FSH",               unit:"IU/L",   ref:{male:[1.5,12.4],female:[3.5,12.5]}},
+  Prolactin:{label:"Prolactin",      unit:"mIU/L",  ref:{male:[86,324],female:[102,496]}},
+  Estradiol:{label:"Estradiol (E2)", unit:"pmol/L", ref:{male:[28,156],female:[46,607]}},
+  Progesterone:{label:"Progesterone",unit:"nmol/L", ref:{male:[0.3,1.0],female:[0.6,4.7]}},
+  AMH:   {label:"AMH",               unit:"pmol/L", ref:{female:[7.0,40.0]}},
+  PTH:   {label:"PTH (intact)",      unit:"pmol/L", ref:{all:[1.6,6.9]}},
+  VitD:  {label:"Vitamin D (25-OH)", unit:"nmol/L", ref:{all:[50,250]}},
+  B12:   {label:"Vitamin B12",       unit:"pmol/L", ref:{all:[133,675]}},
+  Folate:{label:"Folate",            unit:"nmol/L", ref:{all:[340,1020]}},
+  CRP:   {label:"CRP",               unit:"mg/L",   ref:{all:[0,5]}},
+  ESR:   {label:"ESR",               unit:"mm/hr",  ref:{male:[0,15],female:[0,20]}},
+  PCT:   {label:"Procalcitonin",     unit:"µg/L",   ref:{all:[0,0.5]}},
+  TnI:   {label:"Troponin I (hs)",   unit:"ng/L",   ref:{male:[0,34],female:[0,16]}},
+  BNP:   {label:"BNP",               unit:"ng/L",   ref:{all:[0,100]}},
+  NTproBNP:{label:"NT-proBNP",       unit:"ng/L",   ref:{all:[0,125]}},
+  CK_MB: {label:"CK-MB",            unit:"µg/L",   ref:{all:[0,4.94]}},
+  PSA:   {label:"PSA (Total)",       unit:"µg/L",   ref:{male:[0,4.0]}},
+  AFP:   {label:"AFP",               unit:"kIU/L",  ref:{all:[0,8.1]}},
+  CEA:   {label:"CEA",               unit:"µg/L",   ref:{all:[0,3.4]}},
+  CA125: {label:"CA-125",            unit:"kIU/L",  ref:{all:[0,35]}},
+  CA199: {label:"CA 19-9",           unit:"kIU/L",  ref:{all:[0,37]}},
+  CA153: {label:"CA 15-3",           unit:"kIU/L",  ref:{all:[0,30]}},
+  PT:    {label:"PT",                unit:"sec",    ref:{all:[11,14]}},
+  APTT:  {label:"aPTT",              unit:"sec",    ref:{all:[25,37]}},
+  INR:   {label:"INR",               unit:"",       ref:{all:[0.8,1.2]}},
+  Fibrinogen:{label:"Fibrinogen",    unit:"g/L",    ref:{all:[2.0,4.0]}},
+  DDimer:{label:"D-Dimer",           unit:"mg/L",   ref:{all:[0,0.5]}},
+  WBC:   {label:"WBC",               unit:"×10⁹/L", ref:{all:[4.5,11.0]}},
+  RBC:   {label:"RBC",               unit:"×10¹²/L",ref:{male:[4.7,6.1],female:[4.2,5.4]}},
+  HGB:   {label:"Hemoglobin",        unit:"g/dL",   ref:{male:[13.5,17.5],female:[12.0,15.5]}},
+  HCT:   {label:"Hematocrit",        unit:"%",      ref:{male:[41,53],female:[36,46]}},
+  MCV:   {label:"MCV",               unit:"fL",     ref:{all:[80,100]}},
+  MCH:   {label:"MCH",               unit:"pg",     ref:{all:[27,33]}},
+  MCHC:  {label:"MCHC",              unit:"g/dL",   ref:{all:[32,36]}},
+  PLT:   {label:"Platelets",         unit:"×10⁹/L", ref:{all:[150,400]}},
+  Neutrophils:{label:"Neutrophils",  unit:"%",      ref:{all:[50,70]}},
+  Lymphocytes:{label:"Lymphocytes",  unit:"%",      ref:{all:[20,40]}},
+  Monocytes:  {label:"Monocytes",    unit:"%",      ref:{all:[2,10]}},
+  Eosinophils:{label:"Eosinophils",  unit:"%",      ref:{all:[1,6]}},
+  Basophils:  {label:"Basophils",    unit:"%",      ref:{all:[0,1]}},
+  HbA1c: {label:"HbA1c",            unit:"%",      ref:{all:[4.0,5.6]}},
+  Fructosamine:{label:"Fructosamine",unit:"µmol/L", ref:{all:[205,285]}},
+};
+
+const GROUPS = [
+  {label:"Basic Chemistry",     keys:["GLUC","UREA","CREA","URICA"]},
+  {label:"Liver Panel",         keys:["ALT","AST","GGT","ALP","LDH","CK","BILT","BILD","TP","ALB","AMYL","LIP"]},
+  {label:"Lipid Panel",         keys:["CHOL","LDLC","HDLC","TRIG"]},
+  {label:"Electrolytes & Iron", keys:["Na","K","Cl","Ca","Mg","Phos","Iron","TIBC","Ferritin"]},
+  {label:"Thyroid",             keys:["TSH","FT3","FT4","TT3","TT4","AntiTPO","AntiTg"]},
+  {label:"Hormones",            keys:["Cortisol","DHEAS","Insulin","CPeptide","PTH"]},
+  {label:"Reproductive",        keys:["Testosterone","LH","FSH","Prolactin","Estradiol","Progesterone","AMH"]},
+  {label:"Vitamins",            keys:["VitD","B12","Folate"]},
+  {label:"Inflammatory",        keys:["CRP","ESR","PCT"]},
+  {label:"Cardiac Markers",     keys:["TnI","BNP","NTproBNP","CK_MB"]},
+  {label:"Tumor Markers",       keys:["PSA","AFP","CEA","CA125","CA199","CA153"]},
+  {label:"Coagulation",         keys:["PT","APTT","INR","Fibrinogen","DDimer"]},
+  {label:"CBC — Red Cell",      keys:["RBC","HGB","HCT","MCV","MCH","MCHC"]},
+  {label:"CBC — White & Plt",   keys:["WBC","Neutrophils","Lymphocytes","Monocytes","Eosinophils","Basophils","PLT"]},
+  {label:"Diabetes",            keys:["HbA1c","Fructosamine"]},
+];
+
+const U24 = [
+  {key:"u_prot",   label:"Total Protein",  cu:"g/L",    eu:"g/24h",    ref:{all:[0,0.15]}},
+  {key:"u_alb",    label:"Microalbumin",    cu:"mg/L",   eu:"mg/24h",   ref:{all:[0,30]}},
+  {key:"u_crea",   label:"Creatinine",      cu:"mmol/L", eu:"mmol/24h", ref:{male:[8.8,17.7],female:[7.1,15.9]}},
+  {key:"u_urea",   label:"Urea",            cu:"mmol/L", eu:"mmol/24h", ref:{all:[167,580]}},
+  {key:"u_na",     label:"Sodium",          cu:"mmol/L", eu:"mmol/24h", ref:{all:[40,220]}},
+  {key:"u_k",      label:"Potassium",       cu:"mmol/L", eu:"mmol/24h", ref:{all:[25,125]}},
+  {key:"u_cl",     label:"Chloride",        cu:"mmol/L", eu:"mmol/24h", ref:{all:[110,250]}},
+  {key:"u_ca",     label:"Calcium",         cu:"mmol/L", eu:"mmol/24h", ref:{male:[0.1,7.5],female:[0.1,6.2]}},
+  {key:"u_phos",   label:"Phosphorus",      cu:"mmol/L", eu:"mmol/24h", ref:{all:[13,42]}},
+  {key:"u_mg",     label:"Magnesium",       cu:"mmol/L", eu:"mmol/24h", ref:{all:[3.0,5.0]}},
+  {key:"u_ua",     label:"Uric Acid",       cu:"mmol/L", eu:"mmol/24h", ref:{all:[1.5,4.5]}},
+  {key:"u_oxalate",label:"Oxalate",         cu:"mmol/L", eu:"mmol/24h", ref:{male:[0,0.46],female:[0,0.32]}},
+  {key:"u_cortisol",label:"Free Cortisol",  cu:"nmol/L", eu:"nmol/24h", ref:{all:[100,379]}},
+  {key:"u_5hiaa",  label:"5-HIAA",          cu:"µmol/L", eu:"µmol/24h", ref:{all:[10,47]}},
+  {key:"u_vma",    label:"VMA",             cu:"µmol/L", eu:"µmol/24h", ref:{all:[0,35]}},
+  {key:"u_meta",   label:"Metanephrine",    cu:"nmol/L", eu:"nmol/24h", ref:{all:[0,1.9]}},
+  {key:"u_nmeta",  label:"Normetanephrine", cu:"nmol/L", eu:"nmol/24h", ref:{all:[0,3.3]}},
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let step="patient", sex="male", _egfrSex="male";
+let patient={name:"",age:"",date:new Date().toISOString().slice(0,10)};
+let values={}, u24vals={};
+let ocrPending={};
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function getRef(t,s){
+  if(!t.ref) return null;
+  return t.ref.all?t.ref.all:(s==="male"?t.ref.male||null:t.ref.female||null);
+}
+function interp(v,ref){
+  if(!ref||isNaN(v)) return "uk";
+  if(v<ref[0]) return "lo";
+  if(v>ref[1]) return "hi";
+  return "nl";
+}
+function barPct(v,ref){
+  if(!ref) return 50;
+  return Math.min(Math.max(((v-ref[0])/(ref[1]-ref[0]))*100,0),100);
+}
+function getResults(){
+  return Object.entries(values)
+    .filter(([,v])=>v!==""&&v!==undefined&&!isNaN(parseFloat(v)))
+    .map(([k,v])=>{
+      const t=TESTS[k],ref=getRef(t,sex),val=parseFloat(v);
+      return {k,t,val,ref,st:interp(val,ref)};
+    });
+}
+const BAR={hi:"#d63020",lo:"#0070c0",nl:"#1a7a3a",uk:"#ccc"};
+const TL={hi:"↑ HIGH",lo:"↓ LOW",nl:"NORMAL",uk:"—"};
+
+// ═══════════════════════════════════════════════════
+// TAB SWITCH
+// ═══════════════════════════════════════════════════
+function switchTab(t){
+  document.querySelectorAll(".nav-tab").forEach(e=>e.classList.toggle("on",e.dataset.tab===t));
+  ["results","calcs","urine24","report"].forEach(id=>{
+    document.getElementById("tab-"+id).classList.toggle("on",id===t);
+  });
+  if(t==="urine24") renderU24Inputs();
+  if(t==="report")  renderReportSummary();
+}
+
+// ═══════════════════════════════════════════════════
+// RESULTS TAB
+// ═══════════════════════════════════════════════════
+function renderStepbar(){
+  const order=["patient","entry","results"];
+  const labels={patient:"PATIENT",entry:"ENTRY",results:"REVIEW"};
+  const idx=order.indexOf(step);
+  document.getElementById("stepbar").innerHTML=
+    order.map((s,i)=>{
+      const bg=idx===i?"#2952d0":idx>i?"#1a7a3a":"#dde3f5";
+      return `<div class="sdot" style="background:${bg}"></div>${i<2?'<div class="sline"></div>':''}`;
+    }).join("")+`<div class="slabel">${labels[step]}</div>`;
+}
+function render(){
+  renderStepbar();
+  if(step==="patient") renderPatient();
+  else if(step==="entry") renderEntry();
+  else renderReview();
+}
+function renderPatient(){
+  document.getElementById("main").innerHTML=`
+    <div class="inner">
+      <div style="margin-bottom:14px"><div class="ph">STEP 1 OF 3</div><div class="ph2">Patient Information</div></div>
+      <div class="card">
+        <div class="ch">Patient Details</div>
+        <div style="padding:14px 13px">
+          <div class="grid2" style="margin-bottom:12px">
+            <div><div class="fl">PATIENT NAME</div><input class="fi" id="f-name" placeholder="Full name" value="${patient.name}" autocomplete="off"/></div>
+            <div><div class="fl">AGE</div><input class="fi" id="f-age" type="number" placeholder="Years" value="${patient.age}"/></div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="fl">DATE</div>
+            <input class="fi" id="f-date" type="date" value="${patient.date}" style="width:auto"/>
+          </div>
+          <div>
+            <div class="fl" style="margin-bottom:7px">SEX</div>
+            <div style="display:flex;gap:8px">
+              <button class="sx ${sex==="male"?"on":""}" onclick="setSex('male')">Male</button>
+              <button class="sx ${sex==="female"?"on":""}" onclick="setSex('female')">Female</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("footer").innerHTML=`<button class="btn btn-p" onclick="goEntry()">Enter Results ▶</button>`;
+  ["f-name","f-age","f-date"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener("input",e=>{
+      ({
+        "f-name":()=>patient.name=e.target.value,
+        "f-age": ()=>patient.age=e.target.value,
+        "f-date":()=>patient.date=e.target.value
+      })[id]?.();
+    });
+  });
+}
+function setSex(s){sex=s;render();}
+function goEntry(){
+  ["f-name","f-age","f-date"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) const m={"f-name":"name","f-age":"age","f-date":"date"};patient[m[id]]=el.value;
+  });
+  step="entry";render();
+}
+function renderEntry(){
+  let html="";
+  GROUPS.forEach(g=>{
+    html+=`<div class="card"><div class="ch">${g.label}</div>`;
+    g.keys.forEach(key=>{
+      const t=TESTS[key];if(!t)return;
+      const ref=getRef(t,sex),v=values[key];
+      const st=(v!==""&&v!==undefined)?interp(parseFloat(v),ref):"";
+      html+=`<div class="row">
+        <div style="flex:1;min-width:0">
+          <div class="tname">${t.label}</div>
+          <div class="tref">${ref?ref[0]+" – "+ref[1]+" "+t.unit:"— "+t.unit}</div>
+        </div>
+        <input type="number" class="ti${st?" "+st:""}" data-key="${key}"
+          placeholder="${t.unit}" value="${v||""}" step="any" inputmode="decimal"/>
+      </div>`;
+    });
+    html+="</div>";
+  });
+  document.getElementById("main").innerHTML=`<div class="inner">${html}</div>`;
+  document.getElementById("footer").innerHTML=`
+    <button class="btn btn-g" onclick="step='patient';render()">◀ Back</button>
+    <button class="btn btn-red" onclick="clearResults()">🗑 Clear</button>
+    <button class="btn btn-scan" onclick="openScanner()">📷 Scan</button>
+    <button class="btn btn-p" onclick="goReview()">Review ▶</button>`;
+  document.querySelectorAll(".ti[data-key]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const key=e.target.dataset.key,t=TESTS[key];
+      values[key]=e.target.value;
+      const ref=getRef(t,sex);
+      const st=e.target.value!==""?interp(parseFloat(e.target.value),ref):"";
+      e.target.className="ti"+(st?" "+st:"");
+    });
+  });
+}
+function clearResults(){values={};renderEntry();}
+function goReview(){
+  document.querySelectorAll(".ti[data-key]").forEach(inp=>{
+    if(inp.value!=="") values[inp.dataset.key]=inp.value;
+  });
+  step="results";render();
+}
+function renderReview(){
+  const res=getResults();
+  const hi=res.filter(r=>r.st==="hi").length;
+  const lo=res.filter(r=>r.st==="lo").length;
+  const nl=res.filter(r=>r.st==="nl").length;
+  const abn=res.filter(r=>r.st==="hi"||r.st==="lo");
+  let html=`
+    <div class="pstrip">
+      <div>
+        <div class="pname">${patient.name||"—"}</div>
+        <div class="pmeta">${patient.age?patient.age+" yrs · ":""}${sex==="male"?"Male":"Female"} · ${patient.date}</div>
+      </div>
+      <button class="btn btn-g" style="font-size:10px;padding:7px 12px" onclick="step='entry';render()">◀ Edit</button>
+    </div>
+    <div class="sum-row">
+      <div class="sum-box"><div class="sum-n" style="color:var(--hi)">${hi}</div><div class="sum-l" style="color:var(--hi)">HIGH</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--lo)">${lo}</div><div class="sum-l" style="color:var(--lo)">LOW</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--ok)">${nl}</div><div class="sum-l" style="color:var(--ok)">NORMAL</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--dim)">${res.length}</div><div class="sum-l" style="color:var(--dim)">TOTAL</div></div>
+    </div>`;
+  if(abn.length){
+    html+=`<div class="card"><div class="ch red">⚠ ABNORMAL</div>`;
+    abn.forEach(({t,val,ref,st})=>{
+      const c=BAR[st];
+      html+=`<div class="row">
+        <div style="min-width:0;width:108px;flex-shrink:0">
+          <div class="tname" style="font-size:11px">${t.label}</div>
+          <div class="tref">${ref?ref[0]+"–"+ref[1]+" "+t.unit:"—"}</div>
+        </div>
+        <div style="text-align:left;flex-shrink:0;width:68px;direction:ltr">
+          <span style="font-size:15px;font-weight:700;color:${c}">${val}</span>
+          <div style="font-size:8px;color:var(--dim2)">${t.unit}</div>
+        </div>
+        <div class="bar-bg"><div class="bar-fg" style="width:${barPct(val,ref)}%;background:${c}"></div></div>
+        <div class="tag t-${st}">${st==="hi"?"↑HI":"↓LO"}</div>
+      </div>`;
+    });
+    html+="</div>";
+  }
+  GROUPS.forEach(g=>{
+    const gr=res.filter(r=>g.keys.includes(r.k));
+    if(!gr.length)return;
+    html+=`<div class="card"><div class="ch">${g.label}</div>`;
+    gr.forEach(({t,val,ref,st})=>{
+      const c=BAR[st];
+      html+=`<div class="row">
+        <div style="flex:1;min-width:0">
+          <div class="tname">${t.label}</div>
+          <div class="tref">${ref?ref[0]+" – "+ref[1]:"—"} ${t.unit}</div>
+        </div>
+        <div style="text-align:left;flex-shrink:0;direction:ltr;width:68px">
+          <span style="font-size:15px;font-weight:700;color:${c}">${val}</span>
+          <div style="font-size:8px;color:var(--dim2)">${t.unit}</div>
+        </div>
+        <div class="bar-bg" style="width:48px;flex:unset"><div class="bar-fg" style="width:${barPct(val,ref)}%;background:${c}"></div></div>
+        <div class="tag t-${st}">${TL[st]}</div>
+      </div>`;
+    });
+    html+="</div>";
+  });
+  html+="<div style='height:16px'></div>";
+  document.getElementById("main").innerHTML=`<div class="inner">${html}</div>`;
+  document.getElementById("footer").innerHTML=`
+    <button class="btn btn-g" onclick="step='entry';render()">◀ Edit</button>
+    <button class="btn btn-p" onclick="switchTab('report')">Go to Report ▶</button>`;
+}
+
+// ═══════════════════════════════════════════════════
+// REPORT TAB
+// ═══════════════════════════════════════════════════
+function renderReportSummary(){
+  const res=getResults();
+  const volML=parseFloat(document.getElementById("u24-vol")?.value)||0;
+  const volL=volML/1000;
+  const u24filled=U24.filter(t=>u24vals[t.key]&&!isNaN(parseFloat(u24vals[t.key])));
+
+  // eGFR
+  const egfrVal=document.getElementById("egfr-num")?.textContent;
+  const egfrStage=document.getElementById("egfr-stage")?.textContent;
+  // ACR
+  const acrVal=document.getElementById("acr-num")?.textContent;
+  const acrCat=document.getElementById("acr-cat")?.textContent;
+
+  const hasData = res.length>0||u24filled.length>0||(egfrVal&&egfrVal!=="—")||(acrVal&&acrVal!=="—");
+
+  if(!hasData){
+    document.getElementById("report-summary").innerHTML=`
+      <div style="text-align:center;padding:40px 20px;color:var(--dim)">
+        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">No data entered yet</div>
+        <div style="font-size:10px">ادخل النتائج في التبويبات الأخرى أولاً</div>
+      </div>`;
+    return;
+  }
+
+  const hi=res.filter(r=>r.st==="hi").length;
+  const lo=res.filter(r=>r.st==="lo").length;
+  const nl=res.filter(r=>r.st==="nl").length;
+
+  let html=`
+    <div class="pstrip">
+      <div>
+        <div class="pname">${patient.name||"—"}</div>
+        <div class="pmeta">${patient.age?patient.age+" yrs · ":""}${sex==="male"?"Male":"Female"} · ${patient.date}</div>
+      </div>
+    </div>`;
+
+  if(res.length>0){
+    html+=`<div class="sum-row">
+      <div class="sum-box"><div class="sum-n" style="color:var(--hi)">${hi}</div><div class="sum-l" style="color:var(--hi)">HIGH</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--lo)">${lo}</div><div class="sum-l" style="color:var(--lo)">LOW</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--ok)">${nl}</div><div class="sum-l" style="color:var(--ok)">NORMAL</div></div>
+      <div class="sum-box"><div class="sum-n" style="color:var(--dim)">${res.length}</div><div class="sum-l" style="color:var(--dim)">TOTAL</div></div>
+    </div>`;
+  }
+
+  // Calculators summary
+  if((egfrVal&&egfrVal!=="—")||(acrVal&&acrVal!=="—")){
+    html+=`<div class="card"><div class="ch">CALCULATORS</div>`;
+    if(egfrVal&&egfrVal!=="—")
+      html+=`<div class="row"><div style="flex:1"><div class="tname">eGFR</div><div class="tref">${egfrStage||""}</div></div><div style="font-size:18px;font-weight:700;color:var(--acc)">${egfrVal}</div><div style="font-size:10px;color:var(--dim);margin-left:4px">mL/min</div></div>`;
+    if(acrVal&&acrVal!=="—")
+      html+=`<div class="row"><div style="flex:1"><div class="tname">ACR (approx.)</div><div class="tref">${acrCat||""}</div></div><div style="font-size:18px;font-weight:700;color:var(--warn)">${acrVal}</div><div style="font-size:10px;color:var(--dim);margin-left:4px">mg/g</div></div>`;
+    html+="</div>";
+  }
+
+  // 24h urine summary
+  if(u24filled.length>0&&volML>0){
+    html+=`<div class="card"><div class="ch grn">24H URINE — ${volML} mL</div>`;
+    u24filled.forEach(t=>{
+      const conc=parseFloat(u24vals[t.key]);
+      const exc=parseFloat((conc*volL).toFixed(3));
+      const ref=t.ref.all||(sex==="male"?t.ref.male:t.ref.female)||null;
+      const st=interp(exc,ref);
+      const c=BAR[st];
+      html+=`<div class="row">
+        <div style="flex:1;min-width:0"><div class="tname" style="font-size:11px">${t.label}</div><div class="tref">${ref?ref[0]+"–"+ref[1]+" "+t.eu:"—"}</div></div>
+        <div style="text-align:left;direction:ltr;flex-shrink:0;width:72px"><span style="font-size:14px;font-weight:700;color:${c}">${exc}</span><div style="font-size:8px;color:var(--dim2)">${t.eu}</div></div>
+        <div class="tag t-${st}">${TL[st]}</div>
+      </div>`;
+    });
+    html+="</div>";
+  }
+
+  html+=`<div style="height:80px"></div>`;
+  document.getElementById("report-summary").innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════
+// CLEAR FUNCTIONS
+// ═══════════════════════════════════════════════════
+function clearAll(){
+  if(!confirm("Clear ALL data for all tabs?")) return;
+  values={};u24vals={};
+  patient={name:"",age:"",date:new Date().toISOString().slice(0,10)};
+  sex="male";step="patient";
+  ["egfr-crea","egfr-age","acr-alb","acr-crea","u24-vol"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("egfr-result").style.display="none";
+  document.getElementById("acr-result").style.display="none";
+  document.getElementById("u24-results").style.display="none";
+  document.getElementById("vol-status").style.display="none";
+  switchTab("results");render();
+}
+function clearCalcs(){
+  ["egfr-crea","egfr-age","acr-alb","acr-crea"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("egfr-result").style.display="none";
+  document.getElementById("acr-result").style.display="none";
+}
+function clearU24(){
+  u24vals={};
+  const vol=document.getElementById("u24-vol");if(vol)vol.value="";
+  document.getElementById("u24-results").style.display="none";
+  document.getElementById("vol-status").style.display="none";
+  renderU24Inputs();
+}
+
+// ═══════════════════════════════════════════════════
+// eGFR
+// ═══════════════════════════════════════════════════
+function setEgfrSex(s){
+  _egfrSex=s;
+  document.getElementById("egfr-m").classList.toggle("on",s==="male");
+  document.getElementById("egfr-f").classList.toggle("on",s==="female");
+  calcEGFR();
+}
+function calcEGFR(){
+  const crea_umol=parseFloat(document.getElementById("egfr-crea")?.value);
+  const age=parseFloat(document.getElementById("egfr-age")?.value);
+  const res=document.getElementById("egfr-result");
+  if(isNaN(crea_umol)||isNaN(age)||age<1){res.style.display="none";return;}
+  const scr=crea_umol/88.4;
+  const isFemale=_egfrSex==="female";
+  const kappa=isFemale?0.7:0.9;
+  const alpha=isFemale?-0.241:-0.302;
+  const sexFactor=isFemale?1.012:1.0;
+  const ratio=scr/kappa;
+  const egfr=142*Math.pow(Math.min(ratio,1),alpha)*Math.pow(Math.max(ratio,1),-1.200)*Math.pow(0.9938,age)*sexFactor;
+  const egfrR=Math.round(egfr*10)/10;
+  let stage,desc,col,bg;
+  if(egfrR>=90)     {stage="G1 — Normal";              desc="Normal or high";              col="var(--ok)"; bg="var(--ok2)";}
+  else if(egfrR>=60){stage="G2 — Mildly ↓";            desc="Mildly decreased";            col="var(--ok)"; bg="var(--ok2)";}
+  else if(egfrR>=45){stage="G3a — Mild-Moderate ↓";    desc="Mild-moderately decreased";   col="var(--warn)";bg="var(--warn2)";}
+  else if(egfrR>=30){stage="G3b — Moderate-Severe ↓";  desc="Moderately-severely decreased";col="var(--warn)";bg="var(--warn2)";}
+  else if(egfrR>=15){stage="G4 — Severely ↓";          desc="Severely decreased";          col="var(--hi)"; bg="var(--hi2)";}
+  else              {stage="G5 — Kidney Failure";       desc="Kidney failure";              col="var(--hi)"; bg="var(--hi2)";}
+  document.getElementById("egfr-num").textContent=egfrR;
+  document.getElementById("egfr-num").style.color=col;
+  document.getElementById("egfr-stage").textContent=stage;
+  document.getElementById("egfr-stage").style.color=col;
+  document.getElementById("egfr-desc").textContent=desc;
+  document.getElementById("egfr-desc").style.color=col;
+  document.getElementById("egfr-formula").textContent=
+    `Scr: ${crea_umol} µmol/L = ${scr.toFixed(3)} mg/dL\nκ=${kappa}, α=${alpha}, Age=${age}\neGFR = ${egfrR} mL/min/1.73m²`;
+  res.style.display="block";res.style.background=bg;res.style.border=`1.5px solid ${col}44`;
+}
+
+// ═══════════════════════════════════════════════════
+// ACR
+// ═══════════════════════════════════════════════════
+function calcACR(){
+  const alb=parseFloat(document.getElementById("acr-alb")?.value);
+  const cu=parseFloat(document.getElementById("acr-crea")?.value);
+  const res=document.getElementById("acr-result");
+  if(isNaN(alb)||isNaN(cu)||cu===0){res.style.display="none";return;}
+  const cm=cu/88.4;
+  const acr=Math.round((alb/cm)*1000);
+  let cat,col,bg;
+  if(acr<30)       {cat="A1 — Normal";       col="var(--ok)"; bg="var(--ok2)";}
+  else if(acr<=300){cat="A2 — Moderately ↑"; col="var(--warn)";bg="var(--warn2)";}
+  else             {cat="A3 — Severely ↑";   col="var(--hi)"; bg="var(--hi2)";}
+  document.getElementById("acr-num").textContent=acr;
+  document.getElementById("acr-num").style.color=col;
+  document.getElementById("acr-cat").textContent=cat;
+  document.getElementById("acr-cat").style.color=col;
+  document.getElementById("acr-formula").textContent=`Crea: ${cu} µmol/L ÷ 88.4 = ${cm.toFixed(2)} mg/dL\nACR = (${alb} ÷ ${cm.toFixed(2)}) × 1000 = ${acr} mg/g`;
+  res.style.display="block";res.style.background=bg;res.style.border=`1.5px solid ${col}44`;
+}
+
+// ═══════════════════════════════════════════════════
+// 24H URINE
+// ═══════════════════════════════════════════════════
+function renderU24Inputs(){
+  let html="";
+  U24.forEach(t=>{
+    const v=u24vals[t.key]||"";
+    html+=`<div class="row">
+      <div style="flex:1;min-width:0">
+        <div class="tname" style="font-size:11px">${t.label}</div>
+        <div class="tref">Conc. (${t.cu})</div>
+      </div>
+      <input type="number" class="ti" data-u24="${t.key}"
+        placeholder="${t.cu}" value="${v}" step="any" inputmode="decimal"
+        oninput="onU24(this)"/>
+    </div>`;
+  });
+  document.getElementById("u24-inputs").innerHTML=html;
+}
+function onVolChange(){
+  const vol=parseFloat(document.getElementById("u24-vol")?.value)||0;
+  const vs=document.getElementById("vol-status");
+  if(!vol){vs.style.display="none";calcU24();return;}
+  vs.style.display="block";
+  if(vol<800)       {vs.style.background="var(--hi2)";vs.style.color="var(--hi)";vs.style.borderColor="var(--hi)";vs.textContent="↓ Oliguria — Volume < 800 mL/24h";}
+  else if(vol<=2000){vs.style.background="var(--ok2)";vs.style.color="var(--ok)";vs.style.borderColor="var(--ok)";vs.textContent="✓ Normal Volume — "+vol+" mL/24h";}
+  else              {vs.style.background="var(--lo2)";vs.style.color="var(--lo)";vs.style.borderColor="var(--lo)";vs.textContent="↑ Polyuria — Volume > 2000 mL/24h";}
+  calcU24();
+}
+function onU24(inp){u24vals[inp.dataset.u24]=inp.value;calcU24();}
+function calcU24(){
+  const volML=parseFloat(document.getElementById("u24-vol")?.value)||0;
+  if(!volML)return;
+  const volL=volML/1000;
+  const res=document.getElementById("u24-results");
+  const rows=document.getElementById("u24-calc-rows");
+  const filled=U24.filter(t=>u24vals[t.key]&&!isNaN(parseFloat(u24vals[t.key])));
+  if(!filled.length){res.style.display="none";return;}
+  res.style.display="block";
+  let html="";
+  filled.forEach(t=>{
+    const conc=parseFloat(u24vals[t.key]);
+    const exc=parseFloat((conc*volL).toFixed(3));
+    const ref=t.ref.all||(sex==="male"?t.ref.male:t.ref.female)||null;
+    const st=interp(exc,ref);const c=BAR[st];
+    html+=`<div class="row">
+      <div style="flex:1;min-width:0">
+        <div class="tname" style="font-size:11px">${t.label}</div>
+        <div class="tref">Ref: ${ref?ref[0]+" – "+ref[1]+" "+t.eu:"—"}</div>
+        <div style="font-size:9px;color:var(--dim2);margin-top:1px">${conc} ${t.cu} × ${volL.toFixed(2)} L</div>
+      </div>
+      <div style="text-align:left;direction:ltr;flex-shrink:0;width:80px">
+        <span style="font-size:15px;font-weight:700;color:${c}">${exc}</span>
+        <div style="font-size:8px;color:var(--dim2)">${t.eu}</div>
+      </div>
+      <div class="tag t-${st}">${TL[st]}</div>
+    </div>`;
+  });
+  rows.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════
+// OCR SCANNER
+// ═══════════════════════════════════════════════════
+function openScanner(){
+  document.getElementById("ocr-modal").style.display="flex";
+  document.getElementById("ocr-preview").style.display="none";
+  document.getElementById("ocr-matches").innerHTML="";
+  document.getElementById("ocr-apply").style.display="none";
+  document.getElementById("ocr-status").textContent="اضغط لالتقاط صورة أو اختيار من المعرض";
+  ocrPending={};
+}
+function closeScanner(e){
+  if(!e||e.target===document.getElementById("ocr-modal"))
+    document.getElementById("ocr-modal").style.display="none";
+}
+
+async function handleOcrImage(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const preview=document.getElementById("ocr-preview");
+  const status=document.getElementById("ocr-status");
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    preview.src=e.target.result;
+    preview.style.display="block";
+    status.textContent="🔍 Analyzing image with AI...";
+    document.getElementById("ocr-matches").innerHTML="";
+    document.getElementById("ocr-apply").style.display="none";
+    try {
+      // Build test list for AI context
+      const testList=Object.entries(TESTS).map(([k,t])=>`${k}:${t.label}(${t.unit})`).join(", ");
+      const base64=e.target.result.split(",")[1];
+      const response=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{
+            role:"user",
+            content:[
+              {type:"image",source:{type:"base64",media_type:file.type,data:base64}},
+              {type:"text",text:`This is a lab result report. Extract all test values you can see.
+Available test keys: ${testList}
+Return ONLY a JSON object mapping test keys to numeric values. Example: {"GLUC":5.4,"UREA":6.1}
+Match test names to the closest key. Only include tests where you can clearly read a numeric value. Return nothing else.`}
+            ]
+          }]
+        })
+      });
+      const data=await response.json();
+      const text=data.content?.find(c=>c.type==="text")?.text||"{}";
+      let parsed={};
+      try{parsed=JSON.parse(text.replace(/```json?|```/g,"").trim());}catch(e){parsed={};}
+      const matches=Object.entries(parsed).filter(([k,v])=>TESTS[k]&&!isNaN(v));
+      if(matches.length===0){
+        status.textContent="⚠ No recognizable values found. Try a clearer photo.";
+        return;
+      }
+      ocrPending=Object.fromEntries(matches);
+      status.textContent=`✓ Found ${matches.length} test value${matches.length>1?"s":""}`;
+      let html="";
+      matches.forEach(([k,v])=>{
+        const t=TESTS[k];
+        html+=`<div class="match-row">
+          <div class="match-test">${t.label}<br><span style="font-size:9px;color:var(--dim)">${t.unit}</span></div>
+          <div class="match-val">${v}</div>
+        </div>`;
+      });
+      document.getElementById("ocr-matches").innerHTML=html;
+      document.getElementById("ocr-apply").style.display="block";
+    } catch(err){
+      status.textContent="⚠ Error: "+err.message;
+    }
+  };
+  reader.readAsDataURL(file);
+  event.target.value="";
+}
+
+function applyOcrResults(){
+  Object.assign(values,ocrPending);
+  document.getElementById("ocr-modal").style.display="none";
+  if(step==="entry") renderEntry();
+  else{step="entry";render();}
+  switchTab("results");
+  alert(`✓ Applied ${Object.keys(ocrPending).length} values. Review and adjust as needed.`);
+}
+
+// ═══════════════════════════════════════════════════
+// UNIFIED PRINT
+// ═══════════════════════════════════════════════════
+function doPrint(){
+  const res=getResults();
+  const volML=parseFloat(document.getElementById("u24-vol")?.value)||0;
+  const volL=volML/1000;
+  const u24filled=U24.filter(t=>u24vals[t.key]&&!isNaN(parseFloat(u24vals[t.key])));
+  const egfrVal=document.getElementById("egfr-num")?.textContent;
+  const egfrStage=document.getElementById("egfr-stage")?.textContent;
+  const acrVal=document.getElementById("acr-num")?.textContent;
+  const acrCat=document.getElementById("acr-cat")?.textContent;
+
+  const hi=res.filter(r=>r.st==="hi").length;
+  const lo=res.filter(r=>r.st==="lo").length;
+  const nl=res.filter(r=>r.st==="nl").length;
+
+  // Group rows — only entered tests
+  const groupRows=GROUPS.map(g=>{
+    const gr=res.filter(r=>g.keys.includes(r.k));
+    if(!gr.length)return"";
+    return `<tr><td colspan="5" style="background:#1a2040;color:#fff;padding:5px 8px;font-size:9px;letter-spacing:2px;text-transform:uppercase">${g.label}</td></tr>`
+      +gr.map(({t,val,ref,st})=>{
+        const flag=st==="hi"?"H":st==="lo"?"L":"";
+        const col=st==="hi"?"#c62828":st==="lo"?"#1565c0":"#1a5c2e";
+        return `<tr><td>${t.label}</td><td style="font-weight:700;color:${col}">${val}</td><td>${t.unit}</td><td>${ref?ref[0]+" – "+ref[1]:"—"}</td><td style="font-weight:700;color:${col};text-align:center">${flag}</td></tr>`;
+      }).join("");
+  }).join("");
+
+  // Calculators section
+  let calcSection="";
+  if((egfrVal&&egfrVal!=="—")||(acrVal&&acrVal!=="—")){
+    calcSection=`<div style="margin-top:14px"><table>
+      <tr><td colspan="3" style="background:#1a2040;color:#fff;padding:5px 8px;font-size:9px;letter-spacing:2px">CALCULATED VALUES</td></tr>`;
+    if(egfrVal&&egfrVal!=="—")
+      calcSection+=`<tr><td>eGFR (CKD-EPI 2021)</td><td style="font-weight:700;color:#1565c0">${egfrVal}</td><td>mL/min/1.73m² — ${egfrStage||""}</td></tr>`;
+    if(acrVal&&acrVal!=="—")
+      calcSection+=`<tr><td>ACR (Approx. Workaround)</td><td style="font-weight:700;color:#b06000">${acrVal}</td><td>mg/g — ${acrCat||""} ⚠ Approximate</td></tr>`;
+    calcSection+=`</table></div>`;
+  }
+
+  // 24h urine section
+  let u24Section="";
+  if(u24filled.length>0&&volML>0){
+    u24Section=`<div style="margin-top:14px"><table>
+      <tr><td colspan="5" style="background:#1a4040;color:#fff;padding:5px 8px;font-size:9px;letter-spacing:2px">24H URINE — Volume: ${volML} mL</td></tr>
+      <tr style="background:#f7f9ff;font-size:9px;color:#666">
+        <th style="text-align:left;padding:5px 8px">Test</th>
+        <th style="text-align:left;padding:5px 8px">Conc.</th>
+        <th style="text-align:left;padding:5px 8px">Excretion/24h</th>
+        <th style="text-align:left;padding:5px 8px">Reference</th>
+        <th style="text-align:center;padding:5px 8px">Flag</th>
+      </tr>`;
+    u24filled.forEach(t=>{
+      const conc=parseFloat(u24vals[t.key]);
+      const exc=parseFloat((conc*volL).toFixed(3));
+      const ref=t.ref.all||(sex==="male"?t.ref.male:t.ref.female)||null;
+      const st=interp(exc,ref);
+      const flag=st==="hi"?"H":st==="lo"?"L":"";
+      const col=st==="hi"?"#c62828":st==="lo"?"#1565c0":"#1a5c2e";
+      u24Section+=`<tr><td>${t.label}</td><td>${conc} ${t.cu}</td><td style="font-weight:700;color:${col}">${exc} ${t.eu}</td><td>${ref?ref[0]+" – "+ref[1]+" "+t.eu:"—"}</td><td style="font-weight:700;color:${col};text-align:center">${flag}</td></tr>`;
+    });
+    u24Section+=`</table></div>`;
+  }
+
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Lab Report — ${patient.name||"Patient"}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'JetBrains Mono',monospace;color:#111;background:#fff;padding:28px;font-size:11px}
+    .top{display:flex;justify-content:space-between;border-bottom:2px solid #1a2040;padding-bottom:12px;margin-bottom:14px}
+    .lab{font-size:15px;font-weight:700;letter-spacing:3px;color:#1a2040}
+    .sub{font-size:8px;color:#888;letter-spacing:2px;margin-top:3px}
+    .pi{display:grid;grid-template-columns:1fr 1fr;gap:5px 20px;background:#f7f9ff;padding:10px 12px;border-radius:6px;margin-bottom:12px;border:1px solid #dde3f5}
+    .pr{font-size:10px}.pl{color:#888;margin-right:4px}.pv{font-weight:700}
+    .sr{display:flex;gap:8px;margin-bottom:12px}
+    .sb{flex:1;border:1.5px solid #dde3f5;border-radius:5px;padding:8px;text-align:center}
+    .sn{font-size:18px;font-weight:700}
+    table{width:100%;border-collapse:collapse;margin-bottom:4px}
+    td,th{padding:5px 8px;border-bottom:1px solid #eef1f8;font-size:10px;vertical-align:middle}
+    .footer{margin-top:20px;border-top:2px solid #1a2040;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end}
+    .tech{font-size:10px;font-weight:600;color:#1a2040}
+    .tech-sub{font-size:8px;color:#888;margin-top:2px}
+    @media print{body{padding:14px}}
+  </style></head><body>
+  <div class="top">
+    <div><div class="lab">LABORATORY REPORT</div><div class="sub">Biochemistry · Hematology · Hormones · Urine</div></div>
+    <div style="text-align:right;font-size:10px;color:#555">${patient.date}<br>${new Date().toLocaleTimeString()}</div>
+  </div>
+  <div class="pi">
+    <div class="pr"><span class="pl">Name:</span><span class="pv">${patient.name||"—"}</span></div>
+    <div class="pr"><span class="pl">Age:</span><span class="pv">${patient.age?patient.age+" years":"—"}</span></div>
+    <div class="pr"><span class="pl">Sex:</span><span class="pv">${sex==="male"?"Male":"Female"}</span></div>
+    <div class="pr"><span class="pl">Date:</span><span class="pv">${patient.date}</span></div>
+  </div>
+  ${res.length>0?`<div class="sr">
+    <div class="sb"><div class="sn" style="color:#c62828">${hi}</div><div style="font-size:8px;color:#c62828;font-weight:700">HIGH</div></div>
+    <div class="sb"><div class="sn" style="color:#1565c0">${lo}</div><div style="font-size:8px;color:#1565c0;font-weight:700">LOW</div></div>
+    <div class="sb"><div class="sn" style="color:#1a5c2e">${nl}</div><div style="font-size:8px;color:#1a5c2e;font-weight:700">NORMAL</div></div>
+    <div class="sb"><div class="sn">${res.length}</div><div style="font-size:8px;color:#555;font-weight:700">TOTAL</div></div>
+  </div>`:""}
+  ${res.length>0?`<table>
+    <tr style="background:#f7f9ff;font-size:9px;color:#666">
+      <th style="text-align:left;padding:5px 8px">Test</th>
+      <th style="text-align:left;padding:5px 8px">Result</th>
+      <th style="text-align:left;padding:5px 8px">Unit</th>
+      <th style="text-align:left;padding:5px 8px">Reference</th>
+      <th style="text-align:center;padding:5px 8px">Flag</th>
+    </tr>${groupRows}</table>`:""}
+  ${calcSection}
+  ${u24Section}
+  <div class="footer">
+    <div>
+      <div class="tech">Lab Technician: Saad Ali Saad Al-Qarni</div>
+      <div class="tech-sub">فني المختبر: سعد علي سعد القرني</div>
+    </div>
+    <div style="text-align:right;font-size:8px;color:#aaa">
+      <div>Reference ranges are sex-specific where applicable.</div>
+      <div>Printed: ${new Date().toLocaleString()}</div>
+    </div>
+  </div>
+  </body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),400);
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+render();
+renderU24Inputs();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body>
+</html>
