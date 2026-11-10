@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="حاسبة المختبر"/>
+<meta name="theme-color" content="#0b2a5b"/>
+<link rel="manifest" href="./manifest.json"/>
+<link rel="apple-touch-icon" href="./icons/icon-192.png"/>
+<title>حاسبة المختبر الذكية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#0b2a5b; --navy2:#13408c;
+  --bg:#eef2f9; --card:#ffffff; --line:#9fb0cf;
+  --text:#0a1530; --dim:#3d4c6e;
+  --ok:#0b6b2d; --ok-bg:#d6f3df;
+  --hi:#a3170b; --hi-bg:#ffdfda;
+  --lo:#004f9a; --lo-bg:#d9eaff;
+  --warn:#7a4a00; --warn-bg:#fff0cc;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:17px}
+body{font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.5;min-height:100vh;padding-bottom:calc(var(--safe-b) + 30px)}
+button,input,select{font-family:inherit;font-size:1rem}
+:focus-visible{outline:4px solid #ff9800;outline-offset:2px}
+
+/* Header */
+.top{background:var(--navy);color:#fff;padding:calc(var(--safe-t) + 10px) 14px 10px;
+  position:sticky;top:0;z-index:20;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.top-row{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.title{font-size:1.15rem;font-weight:800;line-height:1.25}
+.subtitle{font-size:.8rem;opacity:.9;margin-top:2px}
+.zoom{display:flex;gap:6px;flex-shrink:0}
+.zoom button{min-width:42px;height:42px;border-radius:11px;border:2px solid #fff;background:transparent;
+  color:#fff;font-weight:800;cursor:pointer}
+.zoom button:active{background:#ffffff33}
+
+.wrap{max-width:560px;margin:0 auto;padding:14px}
+
+/* Home cards */
+.menu{display:flex;flex-direction:column;gap:11px}
+.mcard{display:flex;align-items:center;gap:13px;background:var(--card);border:3px solid var(--navy);
+  border-radius:18px;padding:12px 14px;min-height:84px;cursor:pointer;text-align:right;width:100%;
+  box-shadow:0 3px 0 var(--navy);transition:transform .08s, box-shadow .08s}
+.mcard:active{transform:translateY(3px);box-shadow:0 0 0 var(--navy)}
+.ic{flex-shrink:0;width:58px;height:58px;border-radius:15px;display:flex;align-items:center;
+  justify-content:center;font-size:1.5rem;font-weight:800;color:#fff}
+.c1{background:#13408c}.c2{background:#0b6b2d}.c3{background:#b35a00}.c4{background:#a3170b}.c5{background:#5b2a91}
+.mt{font-size:1.08rem;font-weight:800;color:var(--navy)}
+.ms{font-size:.78rem;color:var(--dim);margin-top:2px;direction:ltr;text-align:right}
+.arrow{margin-inline-start:auto;font-size:1.5rem;color:var(--navy);font-weight:800}
+
+/* Page */
+.back{display:flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:none;
+  border-radius:12px;min-height:46px;padding:0 18px;font-weight:800;cursor:pointer;margin-bottom:12px}
+.ph{font-size:1.25rem;font-weight:800;color:var(--navy);margin-bottom:2px}
+.pe{font-size:.85rem;color:var(--dim);direction:ltr;text-align:right;margin-bottom:14px}
+.panel{background:var(--card);border:2.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.panel h3{font-size:1.05rem;color:var(--navy);margin-bottom:10px}
+
+.fld{margin-bottom:13px}
+.fld label{display:block;font-weight:800;font-size:1rem;margin-bottom:4px}
+.fld .hint{font-size:.8rem;color:var(--dim);margin-bottom:6px}
+.inwrap{display:flex;gap:8px;align-items:stretch}
+.inp{flex:1;min-width:0;height:54px;border:2.5px solid var(--navy);border-radius:12px;padding:0 12px;
+  font-size:1.35rem;font-weight:700;background:#fff;color:var(--text);direction:ltr;text-align:center}
+.inp:focus{border-color:#ff9800}
+.unit{display:flex;align-items:center;justify-content:center;min-width:80px;padding:0 8px;
+  background:var(--bg);border:2.5px solid var(--line);border-radius:12px;font-weight:800;
+  font-size:.82rem;direction:ltr;text-align:center}
+select.sel{height:54px;border:2.5px solid var(--navy);border-radius:12px;padding:0 10px;background:#fff;
+  font-weight:800;color:var(--text);min-width:110px}
+.seg{display:flex;gap:10px}
+.seg button{flex:1;min-height:52px;border-radius:12px;border:2.5px solid var(--navy);background:#fff;
+  color:var(--navy);font-weight:800;font-size:1rem;cursor:pointer}
+.seg button.on{background:var(--navy);color:#fff}
+
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btn{flex:1;min-height:50px;border-radius:12px;border:2.5px solid var(--navy);font-weight:800;
+  font-size:.95rem;cursor:pointer;padding:0 16px}
+.btn.pri{background:var(--navy);color:#fff}
+.btn.sec{background:#fff;color:var(--navy)}
+.btn.red{background:#fff;color:var(--hi);border-color:var(--hi)}
+
+/* Result */
+.result{border:3px solid var(--line);border-radius:18px;padding:14px;text-align:center;margin-bottom:12px;background:#fff}
+.result .lab{font-size:.95rem;font-weight:800;color:var(--dim)}
+.result .big{font-size:2.6rem;font-weight:800;line-height:1.15;direction:ltr}
+.result .u{font-size:1rem;font-weight:700;direction:ltr;color:var(--dim)}
+.result .st{display:inline-block;margin-top:8px;padding:6px 16px;border-radius:999px;font-size:1rem;font-weight:800}
+.result .extra{margin-top:10px;font-size:.88rem;color:var(--text);text-align:right;line-height:1.7}
+.result.ok{border-color:var(--ok);background:var(--ok-bg)} .result.ok .big{color:var(--ok)}
+.result.hi{border-color:var(--hi);background:var(--hi-bg)} .result.hi .big{color:var(--hi)}
+.result.lo{border-color:var(--lo);background:var(--lo-bg)} .result.lo .big{color:var(--lo)}
+.result.warn{border-color:#c98400;background:var(--warn-bg)} .result.warn .big{color:var(--warn)}
+.result.idle{background:#fff;border-style:dashed}
+.st.ok{background:var(--ok);color:#fff}.st.hi{background:var(--hi);color:#fff}
+.st.lo{background:var(--lo);color:#fff}.st.warn{background:#c98400;color:#fff}
+
+.fail{border:3px solid var(--hi);background:var(--hi-bg);border-radius:16px;padding:14px;margin-bottom:12px}
+.fail b{display:block;font-size:1.1rem;color:var(--hi);margin-bottom:6px}
+
+.note{background:var(--warn-bg);border:2.5px solid #c98400;border-radius:12px;padding:10px 12px;
+  font-size:.82rem;color:var(--warn);font-weight:700;margin-bottom:14px}
+.formula{background:#f4f6fb;border:2px solid var(--line);border-radius:12px;padding:12px;
+  direction:ltr;text-align:left;font-size:.85rem;line-height:1.8;white-space:pre-wrap;color:var(--dim)}
+
+/* 24h rows */
+.row24{background:#fff;border:2.5px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:10px}
+.row24 .nm{font-weight:800;font-size:1rem}
+.row24 .en{font-size:.8rem;color:var(--dim);direction:ltr;text-align:right}
+.rcard{display:flex;align-items:center;gap:10px;border:2.5px solid var(--line);border-radius:14px;
+  padding:10px 12px;margin-bottom:9px;background:#fff}
+.rcard.ok{border-color:var(--ok);background:var(--ok-bg)}
+.rcard.hi{border-color:var(--hi);background:var(--hi-bg)}
+.rcard.lo{border-color:var(--lo);background:var(--lo-bg)}
+.rcard .l{flex:1;min-width:0}
+.rcard .n{font-weight:800;font-size:.98rem}
+.rcard .r{font-size:.82rem;color:var(--dim);direction:ltr;text-align:right}
+.rcard .v{font-size:1.45rem;font-weight:800;direction:ltr;text-align:left;line-height:1.1}
+.rcard .vu{font-size:.75rem;direction:ltr;color:var(--dim);text-align:left}
+.badge{min-width:76px;text-align:center;padding:6px 4px;border-radius:10px;font-weight:800;font-size:.85rem;color:#fff}
+.badge.ok{background:var(--ok)}.badge.hi{background:var(--hi)}.badge.lo{background:var(--lo)}
+.sumrow{display:flex;gap:8px;margin-bottom:12px}
+.sumbox{flex:1;border-radius:14px;padding:10px 4px;text-align:center;font-weight:800;color:#fff}
+.sumbox b{display:block;font-size:1.5rem;line-height:1}
+.sumbox span{font-size:.8rem}
+
+.foot{text-align:center;font-size:.8rem;color:var(--dim);margin-top:22px;line-height:1.7}
+.toast{position:fixed;bottom:calc(var(--safe-b) + 24px);left:50%;transform:translateX(-50%);
+  background:var(--navy);color:#fff;padding:14px 22px;border-radius:14px;font-weight:800;z-index:50;display:none}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-row">
+    <div>
+      <div class="title">حاسبة المختبر الذكية</div>
+      <div class="subtitle">مختبر مستشفى سبت العلاية العام</div>
+    </div>
+    <div class="zoom" aria-label="حجم الخط">
+      <button onclick="zoom(-1)" aria-label="تصغير الخط">أ-</button>
+      <button onclick="zoom(1)" aria-label="تكبير الخط">أ+</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="view"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═════════════ أدوات عامة ═════════════
+const $ = id => document.getElementById(id);
+const AR_DIG = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','٫':'.','،':'.',',':'.'};
+function num(id){
+  const el=$(id); if(!el) return NaN;
+  const s=(el.value||'').replace(/[٠-٩٫،,]/g,c=>AR_DIG[c]).trim();
+  return s===''?NaN:parseFloat(s);
+}
+function fmt(v,d){
+  if(!isFinite(v)) return '—';
+  const a=Math.abs(v);
+  const dec = d!==undefined ? d : (a>=100?1:a>=10?2:3);
+  return String(parseFloat(v.toFixed(dec)));
+}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1800);}
+function copyText(txt){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ ✓')).catch(()=>fallbackCopy(txt));
+  } else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('تم النسخ ✓');}catch(e){toast('تعذر النسخ');}
+  document.body.removeChild(ta);
+}
+// حجم الخط
+let fs=17;
+try{const s=parseInt(localStorage.getItem('labcalc-fs2'));if(s>=14&&s<=30)fs=s;}catch(e){}
+function applyFs(){document.documentElement.style.fontSize=fs+'px';}
+function zoom(d){fs=Math.min(30,Math.max(14,fs+d*2));applyFs();try{localStorage.setItem('labcalc-fs2',fs);}catch(e){}}
+applyFs();
+
+// حقل إدخال
+function field(id,label,unit,ph,hint){
+  return `<div class="fld"><label for="${id}">${label}</label>${hint?`<div class="hint">${hint}</div>`:''}
+  <div class="inwrap"><input class="inp" id="${id}" type="text" inputmode="decimal" autocomplete="off" placeholder="${ph||''}"/>
+  <div class="unit">${unit}</div></div></div>`;
+}
+function stat(v,ref){
+  if(!ref||!isFinite(v)) return {c:'warn',t:'—'};
+  if(v<ref[0]) return {c:'lo',t:'▼ منخفض'};
+  if(v>ref[1]) return {c:'hi',t:'▲ مرتفع'};
+  return {c:'ok',t:'✔ طبيعي'};
+}
+function resultBox(cls,label,big,unit,st,extra){
+  return `<div class="result ${cls}"><div class="lab">${label}</div>
+  <div class="big">${big}</div><div class="u">${unit}</div>
+  ${st?`<div class="st ${cls}">${st}</div>`:''}
+  ${extra?`<div class="extra">${extra}</div>`:''}</div>`;
+}
+function idleBox(msg){
+  return `<div class="result idle"><div class="lab">النتيجة النهائية</div>
+  <div class="big" style="color:#9aa7c4">—</div><div class="u">${msg||'أدخل القيم الظاهرة في الجهاز'}</div></div>`;
+}
+function pageHead(ar,en){
+  return `<button class="back" onclick="go('')">◀ &nbsp;الرئيسية</button>
+  <div class="ph">${ar}</div><div class="pe">${en}</div>`;
+}
+function clearInputs(ids,after){
+  ids.forEach(i=>{const e=$(i);if(e)e.value='';});
+  if(after)after();
+}
+
+// ═════════════ الرئيسية ═════════════
+function home(){
+  $('view').innerHTML=`
+  <div class="menu">
+    <button class="mcard" onclick="go('acr')"><div class="ic c1">ACR</div>
+      <div><div class="mt">نسبة الألبومين / الكرياتينين</div><div class="ms">Albumin-Creatinine Ratio</div></div><div class="arrow">‹</div></button>
+    <button class="mcard" onclick="go('egfr')"><div class="ic c2">eGFR</div>
+      <div><div class="mt">معدل الترشيح الكلوي</div><div class="ms">eGFR · CKD-EPI 2021</div></div><div class="arrow">‹</div></button>
+    <button class="mcard" onclick="go('u24')"><div class="ic c3">24h</div>
+      <div><div class="mt">اختبارات بول 24 ساعة</div><div class="ms">24-Hour Urine Excretion</div></div><div class="arrow">‹</div></button>
+    <button class="mcard" onclick="go('a1c')"><div class="ic c4">A1c</div>
+      <div><div class="mt">السكر التراكمي HbA1c</div><div class="ms">When the analyzer fails to calculate</div></div><div class="arrow">‹</div></button>
+    <button class="mcard" onclick="go('more')"><div class="ic c5">＋</div>
+      <div><div class="mt">حاسبات أخرى</div><div class="ms">Ca corrected · Anion gap · LDL · CrCl …</div></div><div class="arrow">‹</div></button>
+  </div>
+  <div class="foot">المصدر الرسمي لحسابات المختبر<br>إعداد: سعد علي القرني — رئيس قسم المختبر<br>
+  النتائج المحسوبة للمساعدة المخبرية، ويُرجع للنتيجة المعتمدة في نظام فيدا.</div>`;
+}
+
+// ═════════════ ACR ═════════════
+function acrPage(){
+  $('view').innerHTML=pageHead('نسبة الألبومين إلى الكرياتينين','ACR — Albumin-to-Creatinine Ratio')+`
+  <div class="panel">
+    <div class="fld"><label>وحدة الألبومين الظاهرة في الجهاز / الاسترب</label>
+      <div class="seg"><button id="au1" class="on" onclick="acrUnit('mgdl')">mg/dL</button>
+      <button id="au2" onclick="acrUnit('mgl')">mg/L</button></div></div>
+    <div id="acrAlbWrap"></div>
+    ${field('acr-crea','الكرياتينين في البول','µmol/L','مثال: 8800','من جهاز الكوباس')}
+    <div class="btns"><button class="btn red" onclick="clearInputs(['acr-alb','acr-crea'],acrCalc)">مسح</button></div>
+  </div>
+  <div id="acrRes"></div>
+  <div class="panel"><h3>التصنيف</h3>
+    <div class="rcard ok"><div class="l"><div class="n">A1 — طبيعي</div></div><div class="v" style="font-size:1.1rem">&lt; 30 mg/g</div></div>
+    <div class="rcard" style="border-color:#c98400;background:var(--warn-bg)"><div class="l"><div class="n">A2 — ارتفاع متوسط</div></div><div class="v" style="font-size:1.1rem">30–300</div></div>
+    <div class="rcard hi"><div class="l"><div class="n">A3 — ارتفاع شديد</div></div><div class="v" style="font-size:1.1rem">&gt; 300</div></div>
+  </div>
+  <div class="formula">ACR (mg/g) = Alb (mg/dL) ÷ [Crea (µmol/L) ÷ 88.4] × 1000
+mg/L ÷ 10 = mg/dL</div>`;
+  acrUnitSet='mgdl'; acrUnit('mgdl');
+  ['acr-crea'].forEach(i=>$(i).addEventListener('input',acrCalc));
+}
+let acrUnitSet='mgdl';
+function acrUnit(u){
+  acrUnitSet=u;
+  const old=$('acr-alb')?$('acr-alb').value:'';
+  $('au1').classList.toggle('on',u==='mgdl');$('au2').classList.toggle('on',u==='mgl');
+  $('acrAlbWrap').innerHTML=field('acr-alb','الألبومين في البول',u==='mgdl'?'mg/dL':'mg/L',u==='mgdl'?'مثال: 30':'مثال: 300');
+  $('acr-alb').value=old;$('acr-alb').addEventListener('input',acrCalc);acrCalc();
+}
+function acrCalc(){
+  const a=num('acr-alb'), c=num('acr-crea');
+  if(!(a>=0)||!(c>0)){$('acrRes').innerHTML=idleBox();return;}
+  const alb=acrUnitSet==='mgl'?a/10:a;
+  const cm=c/88.4;
+  const acr=alb/cm*1000;
+  let cls,t,cat;
+  if(acr<30){cls='ok';cat='A1 — طبيعي';t='✔ طبيعي';}
+  else if(acr<=300){cls='warn';cat='A2 — ارتفاع متوسط';t='▲ مرتفع متوسط';}
+  else{cls='hi';cat='A3 — ارتفاع شديد';t='▲ مرتفع شديد';}
+  $('acrRes').innerHTML=resultBox(cls,'ACR',fmt(acr,1),'mg/g',cat,
+    `بوحدة mg/mmol: <b>${fmt(acr/8.84,1)}</b><br>الكرياتينين = ${fmt(cm,3)} mg/dL`);
+}
+
+// ═════════════ eGFR ═════════════
+let egSex='male';
+function egfrPage(){
+  $('view').innerHTML=pageHead('معدل الترشيح الكلوي','eGFR — CKD-EPI 2021 (بدون عامل العرق)')+`
+  <div class="panel">
+    <div class="fld"><label>الجنس</label>
+      <div class="seg"><button id="eg-m" class="on" onclick="egfrSex('male')">ذكر</button>
+      <button id="eg-f" onclick="egfrSex('female')">أنثى</button></div></div>
+    ${field('eg-age','العمر','سنة','مثال: 45')}
+    ${field('eg-crea','الكرياتينين في المصل','µmol/L','مثال: 90','من جهاز الكوباس')}
+    <div class="btns"><button class="btn red" onclick="clearInputs(['eg-age','eg-crea'],egfrCalc)">مسح</button></div>
+  </div>
+  <div id="egRes"></div>
+  <div class="panel"><h3>المراحل</h3>
+    <div class="rcard ok"><div class="l"><div class="n">G1 — طبيعي</div></div><div class="v" style="font-size:1.1rem">≥ 90</div></div>
+    <div class="rcard ok"><div class="l"><div class="n">G2 — انخفاض خفيف</div></div><div class="v" style="font-size:1.1rem">60–89</div></div>
+    <div class="rcard" style="border-color:#c98400;background:var(--warn-bg)"><div class="l"><div class="n">G3a — خفيف إلى متوسط</div></div><div class="v" style="font-size:1.1rem">45–59</div></div>
+    <div class="rcard" style="border-color:#c98400;background:var(--warn-bg)"><div class="l"><div class="n">G3b — متوسط إلى شديد</div></div><div class="v" style="font-size:1.1rem">30–44</div></div>
+    <div class="rcard hi"><div class="l"><div class="n">G4 — انخفاض شديد</div></div><div class="v" style="font-size:1.1rem">15–29</div></div>
+    <div class="rcard hi"><div class="l"><div class="n">G5 — فشل كلوي</div></div><div class="v" style="font-size:1.1rem">&lt; 15</div></div>
+  </div>
+  <div class="formula">eGFR = 142 × min(Scr/κ,1)^α × max(Scr/κ,1)^−1.200 × 0.9938^Age × (1.012 إن أنثى)
+Scr بوحدة mg/dL (= µmol/L ÷ 88.4)
+ذكر: κ=0.9, α=−0.302 · أنثى: κ=0.7, α=−0.241</div>`;
+  egSex='male';
+  ['eg-age','eg-crea'].forEach(i=>$(i).addEventListener('input',egfrCalc));
+  egfrCalc();
+}
+function egfrSex(s){egSex=s;$('eg-m').classList.toggle('on',s==='male');$('eg-f').classList.toggle('on',s==='female');egfrCalc();}
+function egfrStage(v){
+  if(v>=90) return ['ok','G1 — طبيعي'];
+  if(v>=60) return ['ok','G2 — انخفاض خفيف'];
+  if(v>=45) return ['warn','G3a — خفيف إلى متوسط'];
+  if(v>=30) return ['warn','G3b — متوسط إلى شديد'];
+  if(v>=15) return ['hi','G4 — انخفاض شديد'];
+  return ['hi','G5 — فشل كلوي'];
+}
+function egfrCalc(){
+  const age=num('eg-age'), cr=num('eg-crea');
+  if(!(age>=1)||!(cr>0)){$('egRes').innerHTML=idleBox();return;}
+  const f=egSex==='female';
+  const scr=cr/88.4, k=f?0.7:0.9, al=f?-0.241:-0.302;
+  const r=scr/k;
+  const e=142*Math.pow(Math.min(r,1),al)*Math.pow(Math.max(r,1),-1.2)*Math.pow(0.9938,age)*(f?1.012:1);
+  const [cls,st]=egfrStage(e);
+  $('egRes').innerHTML=resultBox(cls,'eGFR',fmt(e,1),'mL/min/1.73m²',st,
+    `الكرياتينين = ${fmt(scr,2)} mg/dL`);
+}
+
+// ═════════════ 24 ساعة ═════════════
+const U24T=[
+  {k:'na',  ar:'الصوديوم',     en:'Sodium',     cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[40,220]}},
+  {k:'k',   ar:'البوتاسيوم',    en:'Potassium',  cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[25,125]}},
+  {k:'cl',  ar:'الكلورايد',     en:'Chloride',   cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[110,250]}},
+  {k:'ca',  ar:'الكالسيوم',     en:'Calcium',    cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{male:[2.5,7.5],female:[2.5,6.2]}},
+  {k:'phos',ar:'الفوسفور',      en:'Phosphorus', cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[13,42]}},
+  {k:'mg',  ar:'المغنيسيوم',    en:'Magnesium',  cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[3.0,5.0]}},
+  {k:'urea',ar:'اليوريا (BUN)',  en:'Urea',       cu:'mmol/L',eu:'mmol/24h',f:1,    ref:{all:[167,580]}},
+  {k:'ua',  ar:'حمض اليوريك',   en:'Uric Acid',  cu:'µmol/L',eu:'mmol/24h',f:0.001,ref:{all:[1.5,4.5]}},
+  {k:'crea',ar:'الكرياتينين',   en:'Creatinine', cu:'µmol/L',eu:'mmol/24h',f:0.001,ref:{male:[8.8,17.7],female:[7.1,15.9]}},
+  {k:'alb', ar:'الألبومين الدقيق',en:'Microalbumin',cu:'mg/L',eu:'mg/24h',  f:1,    ref:{all:[0,30]}},
+  {k:'tp',  ar:'البروتين الكلي', en:'Total Protein',cu:'mg/dL',eu:'g/24h',  f:0.01, ref:{all:[0,0.15]}, special:'tp'},
+];
+let u24Sex='male', tpUnit='mgdl';
+function u24Page(){
+  let rows='';
+  U24T.forEach(t=>{
+    rows+=`<div class="row24"><div class="nm">${t.ar}</div><div class="en">${t.en}</div>
+    <div class="inwrap" style="margin-top:8px">
+      <input class="inp" id="u-${t.k}" type="text" inputmode="decimal" autocomplete="off" placeholder="${t.cu}"/>
+      ${t.special==='tp'
+        ?`<select class="sel" id="tp-unit" onchange="tpUnit=this.value;u24Calc()"><option value="mgdl">mg/dL</option><option value="gl">g/L</option></select>`
+        :`<div class="unit">${t.cu}</div>`}
+    </div></div>`;
+  });
+  $('view').innerHTML=pageHead('اختبارات بول 24 ساعة','24-Hour Urine — Excretion Calculator')+`
+  <div class="panel">
+    <div class="fld"><label>الجنس</label>
+      <div class="seg"><button id="us-m" class="on" onclick="u24SexSet('male')">ذكر</button>
+      <button id="us-f" onclick="u24SexSet('female')">أنثى</button></div></div>
+    ${field('u-vol','حجم البول الكلي','mL','مثال: 1400','حجم الجمع لمدة 24 ساعة')}
+  </div>
+  <div class="panel"><h3>التراكيز كما تظهر في الجهاز</h3>
+    <div class="hint" style="font-size:.85rem;color:var(--dim);margin-bottom:10px">اترك الخانة فارغة للاختبار غير المطلوب أو الأقل من مدى الجهاز</div>
+    ${rows}
+    <div class="panel" style="margin-bottom:0"><h3>كرياتينين المصل (اختياري — لحساب التصفية)</h3>
+      ${field('u-scr','كرياتينين المصل','µmol/L','اختياري')}</div>
+  </div>
+  <div id="u24Res"></div>
+  <div class="btns">
+    <button class="btn pri" onclick="u24Copy()">نسخ النتائج</button>
+    <button class="btn red" onclick="u24Clear()">مسح الكل</button>
+  </div>
+  <div class="formula" style="margin-top:14px">الإخراج/24 ساعة = التركيز × الحجم (لتر)
+µmol/L → mmol/24h : × الحجم(لتر) ÷ 1000
+البروتين mg/dL → g/24h : × الحجم(لتر) ÷ 100
+تصفية الكرياتينين = (Ucr × V mL) ÷ (Scr × 1440)</div>`;
+  u24Sex='male'; tpUnit='mgdl';
+  $('view').querySelectorAll('input.inp').forEach(i=>i.addEventListener('input',u24Calc));
+  u24Calc();
+}
+function u24SexSet(s){u24Sex=s;$('us-m').classList.toggle('on',s==='male');$('us-f').classList.toggle('on',s==='female');u24Calc();}
+function u24Clear(){
+  ['u-vol','u-scr',...U24T.map(t=>'u-'+t.k)].forEach(i=>{const e=$(i);if(e)e.value='';});
+  u24Calc();
+}
+let u24Last='';
+function u24Calc(){
+  const vol=num('u-vol');
+  const box=$('u24Res');
+  if(!(vol>0)){box.innerHTML=idleBox('أدخل حجم البول أولاً ثم القيم');u24Last='';return;}
+  const vL=vol/1000;
+  let html='',hi=0,lo=0,ok=0,txt=`بول 24 ساعة — الحجم ${vol} mL\n`;
+  let crExc=null, ucr=null;
+  U24T.forEach(t=>{
+    const c=num('u-'+t.k);
+    if(!isFinite(c)) return;
+    let exc, eu=t.eu;
+    if(t.special==='tp'){ exc = tpUnit==='gl' ? c*vL : c*vL/100; }
+    else exc = c*vL*t.f;
+    const ref=t.ref.all||t.ref[u24Sex];
+    const s=stat(exc,ref);
+    if(s.c==='hi')hi++; else if(s.c==='lo')lo++; else ok++;
+    if(t.k==='crea'){crExc=exc;ucr=c;}
+    html+=`<div class="rcard ${s.c}"><div class="l"><div class="n">${t.ar}</div>
+      <div class="r">المرجع: ${ref[0]} – ${ref[1]} ${eu}</div></div>
+      <div style="text-align:left"><div class="v">${fmt(exc)}</div><div class="vu">${eu}</div></div>
+      <div class="badge ${s.c}">${s.t}</div></div>`;
+    txt+=`${t.en}: ${fmt(exc)} ${eu} (${s.t.replace(/[▲▼✔] /,'')})\n`;
+  });
+  if(!html){box.innerHTML=idleBox('أدخل تراكيز الاختبارات');u24Last='';return;}
+  let extra='';
+  const scr=num('u-scr');
+  if(isFinite(ucr)&&scr>0){
+    const clcr=(ucr*vol)/(scr*1440);
+    extra+=`<div class="result ok" style="border-color:var(--navy);background:#fff"><div class="lab">تصفية الكرياتينين (24h)</div>
+      <div class="big" style="color:var(--navy)">${fmt(clcr,1)}</div><div class="u">mL/min</div></div>`;
+    txt+=`Creatinine Clearance: ${fmt(clcr,1)} mL/min\n`;
+  }
+  if(crExc!==null){
+    const cref=U24T.find(t=>t.k==='crea').ref[u24Sex];
+    if(crExc<cref[0]) extra+=`<div class="note">⚠ إخراج الكرياتينين أقل من المرجع — قد يكون جمع العينة ناقصاً. راجع اكتمال الجمع قبل اعتماد النتائج.</div>`;
+  }
+  const summary=`<div class="sumrow">
+    <div class="sumbox" style="background:var(--hi)"><b>${hi}</b><span>مرتفع</span></div>
+    <div class="sumbox" style="background:var(--lo)"><b>${lo}</b><span>منخفض</span></div>
+    <div class="sumbox" style="background:var(--ok)"><b>${ok}</b><span>طبيعي</span></div></div>`;
+  box.innerHTML=summary+html+extra;
+  u24Last=txt;
+}
+function u24Copy(){ if(!u24Last){toast('لا توجد نتائج');return;} copyText(u24Last); }
+
+// ═════════════ HbA1c ═════════════
+// معادلة المختبر المعتمدة: HbA1c % = (A1W3 ÷ HBW3) × 91 + 2.5
+const A1C_SLOPE=91, A1C_INTERCEPT=2.5;
+function a1cPage(){
+  $('view').innerHTML=pageHead('السكر التراكمي HbA1c','عند فشل الجهاز في حساب النتيجة النهائية')+`
+  <div class="note">استخدمها فقط إذا ظهرت قيمة A1W3 و HBW3 ولم يحسب الجهاز HbA1c النهائي.</div>
+  <div class="panel">
+    ${field('a1-a','قيمة A1W3 (HbA1c)','القيمة','كما تظهر في الجهاز')}
+    ${field('a1-h','قيمة HBW3 (Hb)','القيمة','كما تظهر في الجهاز')}
+    <div class="btns"><button class="btn red" onclick="clearInputs(['a1-a','a1-h'],a1cCalc)">مسح</button></div>
+  </div>
+  <div id="a1Res"></div>
+  <div class="panel"><h3>تحويل بين الوحدات</h3>
+    <div class="hint" style="font-size:.85rem;color:var(--dim);margin-bottom:10px">إذا كانت لديك النتيجة بإحدى الوحدتين</div>
+    ${field('a1-pct','HbA1c','% (NGSP)','مثال: 6.8')}
+    ${field('a1-mm','HbA1c','mmol/mol (IFCC)','مثال: 51')}
+    <div id="a1Conv"></div>
+  </div>
+  <div class="formula">HbA1c % = ${A1C_SLOPE} × (A1W3 ÷ HBW3) + ${A1C_INTERCEPT}
+IFCC (mmol/mol) = (NGSP % − 2.152) ÷ 0.09148
+eAG (mg/dL) = 28.7 × A1c − 46.7
+eAG (mmol/L) = 1.59 × A1c − 2.59</div>`;
+  ['a1-a','a1-h'].forEach(i=>$(i).addEventListener('input',a1cCalc));
+  $('a1-pct').addEventListener('input',()=>a1cConv('pct'));
+  $('a1-mm').addEventListener('input',()=>a1cConv('mm'));
+  a1cCalc();
+}
+function a1cClass(p){
+  if(p<5.7) return ['ok','طبيعي'];
+  if(p<6.5) return ['warn','ما قبل السكري'];
+  return ['hi','في مدى السكري'];
+}
+function a1cBlock(p){
+  const [cls,t]=a1cClass(p);
+  const ifcc=(p-2.152)/0.09148;
+  const eag=28.7*p-46.7, eagm=1.59*p-2.59;
+  return resultBox(cls,'HbA1c',fmt(p,1),'% (NGSP)',t,
+   `IFCC: <b>${fmt(ifcc,0)}</b> mmol/mol<br>متوسط الجلوكوز التقديري: <b>${fmt(eag,0)}</b> mg/dL (<b>${fmt(eagm,1)}</b> mmol/L)`);
+}
+function a1cCalc(){
+  const a=num('a1-a'), h=num('a1-h');
+  const box=$('a1Res');
+  if(!isFinite(a)&&!isFinite(h)){box.innerHTML=idleBox();return;}
+  if(!(a>0)||!(h>0)){
+    box.innerHTML=`<div class="fail"><b>⚠ تعذر الحساب</b>أدخل قيمتي A1W3 و HBW3 كاملتين وأكبر من الصفر.</div>`;return;
+  }
+  const p=A1C_SLOPE*(a/h)+A1C_INTERCEPT;
+  if(p<3||p>20){
+    box.innerHTML=`<div class="fail"><b>⚠ فشل الحساب</b>الناتج (${fmt(p,1)}%) خارج المدى المعقول (3–20%).<br>
+      تحقق من القيمتين، أو من تبديل A1W3 مع HBW3، أو أعد تشغيل العينة على الجهاز.</div>`;return;
+  }
+  let extra='';
+  box.innerHTML=a1cBlock(p)+extra;
+}
+function a1cConv(from){
+  const box=$('a1Conv');
+  let p;
+  if(from==='pct'){const v=num('a1-pct');$('a1-mm').value='';p=v;}
+  else{const v=num('a1-mm');$('a1-pct').value='';p=isFinite(v)?0.09148*v+2.152:NaN;}
+  box.innerHTML=(isFinite(p)&&p>0)?a1cBlock(p):'';
+}
+
+// ═════════════ حاسبات أخرى ═════════════
+const MORE=[
+ {id:'cca',ar:'الكالسيوم المصحح بالألبومين',en:'Corrected Calcium',
+  f:[['ca','الكالسيوم','mmol/L'],['alb','الألبومين','g/L']],
+  calc:v=>{const r=v.ca+0.02*(40-v.alb);return {val:r,u:'mmol/L',ref:[2.15,2.55],d:2,fm:'Ca + 0.02 × (40 − Alb)'};}},
+ {id:'ag',ar:'الفجوة الأنيونية',en:'Anion Gap',
+  f:[['na','الصوديوم','mmol/L'],['cl','الكلورايد','mmol/L'],['hco3','البيكربونات','mmol/L']],
+  calc:v=>{const r=v.na-(v.cl+v.hco3);return {val:r,u:'mmol/L',ref:[8,16],d:1,fm:'Na − (Cl + HCO₃)'};}},
+ {id:'ldl',ar:'LDL المحسوب (فريدوالد)',en:'LDL-C Friedewald',
+  f:[['tc','الكوليسترول الكلي','mmol/L'],['hdl','HDL','mmol/L'],['tg','الدهون الثلاثية','mmol/L']],
+  calc:v=>{ if(v.tg>4.5) return {fail:'لا تصح المعادلة عندما تتجاوز الدهون الثلاثية 4.5 mmol/L — يُقاس LDL مباشرة.'};
+    const r=v.tc-v.hdl-v.tg/2.2;return {val:r,u:'mmol/L',ref:[0,3.36],d:2,fm:'TC − HDL − TG/2.2'};}},
+ {id:'crcl',ar:'تصفية الكرياتينين (كوكروفت-جولت)',en:'Cockcroft-Gault CrCl',sex:true,
+  f:[['age','العمر','سنة'],['wt','الوزن','كجم'],['scr','كرياتينين المصل','µmol/L']],
+  calc:(v,s)=>{const r=(140-v.age)*v.wt*(s==='female'?1.04:1.23)/v.scr;return {val:r,u:'mL/min',ref:[90,140],d:1,fm:'(140 − Age) × Wt × (1.23 ذكر | 1.04 أنثى) ÷ Scr'};}},
+ {id:'osm',ar:'أسمولية المصل المحسوبة',en:'Calculated Serum Osmolality',
+  f:[['na','الصوديوم','mmol/L'],['glu','الجلوكوز','mmol/L'],['urea','اليوريا','mmol/L']],
+  calc:v=>{const r=2*v.na+v.glu+v.urea;return {val:r,u:'mOsm/kg',ref:[275,295],d:0,fm:'2×Na + Glucose + Urea'};}},
+ {id:'tsat',ar:'نسبة تشبع الترانسفيرين',en:'Transferrin Saturation',
+  f:[['fe','الحديد','µmol/L'],['tibc','TIBC','µmol/L']],
+  calc:v=>{const r=v.fe/v.tibc*100;return {val:r,u:'%',ref:[20,50],d:1,fm:'Iron ÷ TIBC × 100'};}},
+];
+function morePage(){
+  $('view').innerHTML=pageHead('حاسبات أخرى','Additional Calculators')+`<div class="menu">`+
+   MORE.map(m=>`<button class="mcard" style="min-height:72px" onclick="go('m-${m.id}')">
+     <div class="ic c5" style="width:46px;height:46px;font-size:1.2rem">ƒ</div>
+     <div><div class="mt" style="font-size:1rem">${m.ar}</div><div class="ms">${m.en}</div></div><div class="arrow">‹</div></button>`).join('')+`</div>`;
+}
+let mSex='male';
+function moreCalcPage(id){
+  const m=MORE.find(x=>x.id===id); if(!m){go('more');return;}
+  mSex='male';
+  $('view').innerHTML=`<button class="back" onclick="go('more')">◀ &nbsp;رجوع</button>
+  <div class="ph">${m.ar}</div><div class="pe">${m.en}</div>
+  <div class="panel">
+   ${m.sex?`<div class="fld"><label>الجنس</label><div class="seg"><button id="ms-m" class="on" onclick="mSexSet('male')">ذكر</button><button id="ms-f" onclick="mSexSet('female')">أنثى</button></div></div>`:''}
+   ${m.f.map(f=>field('m-'+f[0],f[1],f[2],'')).join('')}
+   <div class="btns"><button class="btn red" onclick="clearInputs([${m.f.map(f=>`'m-${f[0]}'`).join(',')}],()=>moreCalc('${id}'))">مسح</button></div>
+  </div>
+  <div id="mRes"></div><div class="formula">${m.calc.toString().includes('fm')?'':''}</div>`;
+  m.f.forEach(f=>$('m-'+f[0]).addEventListener('input',()=>moreCalc(id)));
+  window._mSexRe=()=>moreCalc(id);
+  moreCalc(id);
+}
+function mSexSet(s){mSex=s;$('ms-m').classList.toggle('on',s==='male');$('ms-f').classList.toggle('on',s==='female');window._mSexRe&&window._mSexRe();}
+function moreCalc(id){
+  const m=MORE.find(x=>x.id===id);
+  const v={};let ok=true;
+  m.f.forEach(f=>{const x=num('m-'+f[0]);if(!(x>0))ok=false;v[f[0]]=x;});
+  if(!ok){$('mRes').innerHTML=idleBox();return;}
+  const r=m.calc(v,mSex);
+  if(r.fail){$('mRes').innerHTML=`<div class="fail"><b>⚠ تعذر الحساب</b>${r.fail}</div>`;return;}
+  const s=stat(r.val,r.ref);
+  $('mRes').innerHTML=resultBox(s.c,m.en,fmt(r.val,r.d),r.u,s.t,
+    `المرجع: <span dir="ltr">${r.ref[0]} – ${r.ref[1]} ${r.u}</span><br><span dir="ltr" style="color:var(--dim);font-size:.85rem">${r.fm}</span>`);
+}
+
+// ═════════════ التنقل ═════════════
+function go(h){location.hash=h;}
+function route(){
+  const h=(location.hash||'').replace('#','');
+  window.scrollTo(0,0);
+  if(h==='acr') acrPage();
+  else if(h==='egfr') egfrPage();
+  else if(h==='u24') u24Page();
+  else if(h==='a1c') a1cPage();
+  else if(h==='more') morePage();
+  else if(h.startsWith('m-')) moreCalcPage(h.slice(2));
+  else home();
+}
+window.addEventListener('hashchange',route);
+route();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body>
+</html>
